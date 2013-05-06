@@ -1,0 +1,39 @@
+{	"AppDescription":
+	{	"en": "An app for creating playlists tailored towards dance"
+	}
+,	"AppIcon":
+	{	"36x18": "img/tempo-wiki.png"
+	}
+,	"AppName":
+	{	"en": "TempoWiki"
+	}
+,	"BundleIdentifier": "tw"
+,	"BundleType": "Application"
+,	"BundleVersion": "0.1"
+,	"DefaultTabs":
+	[	{	"arguments": "tab-player"
+		,	"title":
+			{	"en": "Home"
+			}
+		}
+	,	{	"arguments": "tab-playlist"
+		,	"title":
+			{	"en": "Playlist creator"
+			}
+		}
+	]
+,	"Dependencies":
+	{	"api": "1.10.2"
+	,	"views": "1.18.1"
+	}
+,	"RequiredPermissions":
+	[	"http://tempowiki.com"
+	,	"http://developer.echonest.com"
+	,	"http://www.myrtveitfoto.no"
+	]
+,	"RequiredInterface": 1
+,	"SupportedLanguages":
+	[	"en"
+	]
+,	"VendorIdentifier": "no.myrtveitfoto"
+}

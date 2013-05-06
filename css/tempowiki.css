@@ -1,0 +1,127 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+html {
+	text-align: center;
+}
+#header {
+	height: 50px;
+	font-size: 28px;
+	line-height: 50px;
+}
+#wrapper {
+	min-height: 50px;
+}
+.bpm {
+	display: inline-block;
+	line-height: 70px;
+	font-size: 24px;
+	vertical-align: middle;
+	width: 200px;
+	text-align: left;
+}
+.units {
+	display: inline-block;
+	vertical-align: middle;
+	list-style: none;
+}
+.units li {
+	text-align: left;
+}
+.units input[type="radio"]:checked + label {
+	color: black;
+}
+.tap {
+	width: 100%;
+	height: 20%;
+	background: #303031;
+	color: #767676;
+	position: fixed;
+	bottom: 0;
+	font-size: 28px;
+	line-height: 28px;
+	text-align: center;
+	display: table;
+}
+.tap span {
+	display: table-cell;
+	height: 100%;
+	vertical-align: middle;
+}
+form {
+	text-align: center;
+	overflow: auto;
+}
+fieldset {
+	margin: 5px 0;
+}
+fieldset legend {
+	display: inline;
+}
+.sp-button[disabled] {
+    opacity: 0.6;
+}
+.sp-list {
+	text-align: left;
+	text-shadow: none;
+}
+.sp-list-cell-bpm {
+	text-align: right;
+}
+.sp-list-heading-sortable:active:hover {
+	background: url(../img/header-marked.png);
+}
+.sp-list-heading-sorted-asc {
+	background: url(../img/header-sorted-asc.png) right 4px top 7px no-repeat, url(../img/header-sorted.png);
+	padding-right: 15px;
+}
+.sp-list-heading-sorted-desc {
+	background: url(../img/header-sorted-desc.png) right 4px top 8px no-repeat, url(../img/header-sorted.png);
+	padding-right: 15px;
+}
+.sp-list-heading-sorted-asc:active:hover {
+	background: url(../img/header-sorted-asc.png) right 4px top 7px no-repeat, url(../img/header-sorted-marked.png);
+}
+.sp-list-heading-sorted-desc:active:hover {
+	background: url(../img/header-sorted-desc.png) right 4px top 8px no-repeat, url(../img/header-sorted-marked.png);
+}
+.range {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 20px -5px 0;
+}
+.track {
+	height: 14px;
+	width: 100%;
+	/*background: url(../img/track-left.png) left no-repeat, url(../img/track-right.png) right no-repeat, url(../img/track.png);*/
+	background: url(sp://import/img/scrollbars/light/horizontal-track-left.png) left no-repeat, url(../img/horizontal-track-right.png) right no-repeat, url(sp://import/img/scrollbars/light/horizontal-track.png);
+	margin: 0 -11px;
+	padding: 0 11px;
+}
+.range .min {
+	float: left;
+	margin-left: -7px;
+}
+.range .max {
+	float: right;
+	margin-right: -7px;
+}
+.track .marked {
+	height: 100%;
+	position: relative;
+	/*background: url(../img/track-marked.png);*/
+	background: url(sp://import/img/scrollbars/light/horizontal-thumb-middle.png);
+}
+.track .marked .handle {
+	width: 7px;
+	height: 14px;
+}
+.track .marked .min {
+	/*background: url(../img/knob.png);*/
+	background: url(sp://import/img/scrollbars/light/horizontal-thumb-left.png);
+}
+.track .marked .max {
+	/*background: url(../img/knob.png);*/
+	background: url(sp://import/img/scrollbars/light/horizontal-thumb-right.png);
+}
