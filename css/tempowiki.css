@@ -70,21 +70,27 @@ fieldset legend {
 	text-align: right;
 }
 .sp-list-heading-sortable:active:hover {
-	background: url(../img/header-marked.png);
+	border-left-color: #e5e5e5;
+	background: url(../img/header.png);
+}
+.sp-list-heading-sorted {
+	border-left-color: #cccccc;
+	padding-right: 15px;
 }
 .sp-list-heading-sorted-asc {
-	background: url(../img/header-sorted-asc.png) right 4px top 7px no-repeat, url(../img/header-sorted.png);
-	padding-right: 15px;
+	background: url(../img/header-sorted-asc.png) right 4px top 7px no-repeat, url(../img/header.png) 0 -22px;
 }
 .sp-list-heading-sorted-desc {
-	background: url(../img/header-sorted-desc.png) right 4px top 8px no-repeat, url(../img/header-sorted.png);
-	padding-right: 15px;
+	background: url(../img/header-sorted-desc.png) right 4px top 8px no-repeat, url(../img/header.png) 0 -22px;
+}
+.sp-list-heading-sorted:active:hover {
+	border-left-color: #b2b2b2;
 }
 .sp-list-heading-sorted-asc:active:hover {
-	background: url(../img/header-sorted-asc.png) right 4px top 7px no-repeat, url(../img/header-sorted-marked.png);
+	background: url(../img/header-sorted-asc.png) right 4px top 7px no-repeat, url(../img/header.png) 0 -44px;
 }
 .sp-list-heading-sorted-desc:active:hover {
-	background: url(../img/header-sorted-desc.png) right 4px top 8px no-repeat, url(../img/header-sorted-marked.png);
+	background: url(../img/header-sorted-desc.png) right 4px top 8px no-repeat, url(../img/header.png) 0 -44px;
 }
 .range {
 	display: inline-block;

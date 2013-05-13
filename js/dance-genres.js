@@ -1,4 +1,4 @@
-function DanceGenres(config, css, Button) {
+function DanceGenres(config, css, Button, Popup) {
 	var buttonStates = 3;
 	var accentuation = ['negative', '', 'positive'];
 	
@@ -31,6 +31,7 @@ function DanceGenres(config, css, Button) {
 	this.forPlaylist = function(playlist, parent, callback, css) {
 		this.callback = callback;
 		var columns = [];
+		var popups = {};
 		
 		var container = parent.appendChild(document.createElement('fieldset'));
 		container.innerHTML = '<legend>'+_('Dance genres for the playlist')+'</legend>';
@@ -43,7 +44,13 @@ function DanceGenres(config, css, Button) {
 				css.removeClass(playlist.view.nodes.headerRow.children[i], 'undefined');
 				css.addClass(playlist.view.nodes.headerRow.children[i], 'sp-list-cell-dancegenre');
 				playlist.view.nodes.headerRow.children[i].childNodes[0].textContent = _('Dance genres');
-				playlist.model.fields[i] = {id: 'dancegenre', title: _('Dance genres'), className: 'sp-list-cell-dancegenre', fixedWidth: 92, neededProperties: {track: ['danceGenres']}, get: function(a){return a.track.danceGenres;}};
+				playlist.model.fields[i] = {id: 'dancegenre', title: _('Dance genres'), className: 'sp-list-cell-dancegenre', fixedWidth: 92, neededProperties: {track: ['danceGenres']}, get: function(a) {
+						var div = TW.createElement('div', null, null, a.track.danceGenres.short);
+						div.addEventListener('mouseover', function() {a.track.danceGenres.popup.showFor(div);});
+						div.addEventListener('mouseout', function() {a.track.danceGenres.popup.hide();});
+						return div;
+					}
+				};
 			}
 		
 		this.updateTrack = function(track, danceGenres) {
@@ -57,10 +64,16 @@ function DanceGenres(config, css, Button) {
 						exclude.push(this.danceGenres[danceGenre].parent);
 				}
 			danceGenres = [];
-			for(var i = 0; i < include.length; ++i)
+			danceGenresShort = [];
+			for(var i = 0; i < include.length; ++i) {
+				danceGenres.push(this.danceGenres[include[i]].name);
 				if(exclude.indexOf(include[i]) === -1)
-					danceGenres.push(this.danceGenres[include[i]].short);
-			track.danceGenres = danceGenres.join(', ');
+					danceGenresShort.push(this.danceGenres[include[i]].short);
+			}
+			track.danceGenres = {name: danceGenres.join(', '), short: danceGenresShort.join(', ')};
+			if(typeof popups[track.danceGenres.short] === 'undefined')
+				popups[track.danceGenres.short] = Popup.withText(track.danceGenres.name);
+			track.danceGenres.popup = popups[track.danceGenres.short];
 		};
 
 		this.submit = function(data) {

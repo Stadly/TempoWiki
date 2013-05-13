@@ -49,6 +49,8 @@ function Player(player, Button, Throbber, editor) {
 				}
 			,	function() {
 					// Error fetching info
+					console.log('Error fetching info');
+					console.log(this);
 				}
 			,	data
 			);

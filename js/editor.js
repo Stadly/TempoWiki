@@ -100,6 +100,8 @@ function Editor(player, Button, Throbber) {
 			}
 		,	function() {
 				// Error registering info
+				console.log('Error registering info');
+				console.log(this);
 			}
 		,	data
 		);

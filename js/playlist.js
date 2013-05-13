@@ -41,10 +41,13 @@ function Playlist(models, css, Throbber, List) {
 			});
 			
 			for(var i = 0; i < list.model.fields.length; ++i) {
+				css.removeClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted');
 				css.removeClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted-asc');
 				css.removeClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted-desc');
-				if(this.current.length > 0 && list.model.fields[i].id === this.current[0][0])
+				if(this.current.length > 0 && list.model.fields[i].id === this.current[0][0]) {
+					css.addClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted');
 					css.addClass(list.view.nodes.headerRow.children[i], this.current[0][1] ? 'sp-list-heading-sorted-asc' : 'sp-list-heading-sorted-desc');
+				}
 			}
 			
 			// Error when list contains unplayable tracks
@@ -143,6 +146,8 @@ function Playlist(models, css, Throbber, List) {
 				}
 			,	function() {
 					// Error fetching playlist
+					console.log('Error fetching playlist');
+					console.log(this);
 				}
 			,	data
 			);

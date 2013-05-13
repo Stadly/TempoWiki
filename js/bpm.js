@@ -10,9 +10,9 @@ function BPM(config, Throbber) {
 
 		units.display(container, changeUnit);
 
-		var xhr;
+		var xhr = null;
 		this.load = function(config) {
-			if(typeof xhr !== 'undefined')
+			if(xhr !== null)
 				xhr.abort();
 			bpm = config.bpm || 0;
 			update();
@@ -21,7 +21,7 @@ function BPM(config, Throbber) {
 				xhr = new AjaxRequest
 				(	'http://developer.echonest.com/api/v4/track/profile?api_key=JWR4RIYPCFCNWPMGD&bucket=audio_summary&id='+config.track.replace(/^spotify:/, 'spotify-WW:')
 				,	function() {
-						// Success registering info
+						// Success fetching data from The Echo Nest
 						var info = eval('('+this.responseText+');');
 						if(info.response.track)
 							bpm = info.response.track.audio_summary.tempo || 0;
@@ -31,18 +31,22 @@ function BPM(config, Throbber) {
 						update();
 					}
 				,	function() {
-						// Error registering info
+						// Error fetching data from The Echo Nest
+						console.log('Error fetching data from the Echo Nest');
+						console.log(this);
+						update();
 					}
 				);
 			}
 		};
 		
 		function changeUnit() {
-			if(typeof xhr === 'undefined')
+			if(xhr === null)
 				update();
 		}
 
 		function update() {
+			xhr = null;
 			throbber.hide();
 			bpmElm.innerText = Math.round(bpm * units.getMultiplier()) + ' ' + units.getUnit();
 		}
