@@ -11,14 +11,20 @@
 ,	"BundleType": "Application"
 ,	"BundleVersion": "0.1"
 ,	"DefaultTabs":
-	[	{	"arguments": "tab-player"
-		,	"title":
-			{	"en": "Home"
-			}
-		}
-	,	{	"arguments": "tab-playlist"
+	[	
+		{	"arguments": "tab-playlist"
 		,	"title":
 			{	"en": "Playlist creator"
+			}
+		}
+	,	{	"arguments": "tab-player"
+		,	"title":
+			{	"en": "Now playing"
+			}
+		}
+	,	{	"arguments": "tab-profiler"
+		,	"title":
+			{	"en": "Profile creator"
 			}
 		}
 	]

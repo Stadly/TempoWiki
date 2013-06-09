@@ -34,6 +34,7 @@ class Database {
 
 		self::$instance = new PDO("mysql:host=$host;dbname=$database", $username, $password);
 		self::$instance->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+		self::$instance->exec('SET SQL_BIG_SELECTS = 1');
 	}
 
 	/**

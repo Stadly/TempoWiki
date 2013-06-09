@@ -8,19 +8,23 @@ if(isset($_POST['track'])) {
 	$user = User::get();
 	if($user !== FALSE) {
 		require_once 'includes/Track.php';
-		require_once 'includes/BPM.php';
-		require_once 'includes/DanceGenre.php';
+		require_once 'includes/Tempo.php';
+		require_once 'includes/Dancegenre.php';
+		require_once 'includes/Musicgenre.php';
 		
 		$date = gmdate('Y-m-d H:i:s');
 		$result = array('track' => $_POST['track']);
 		$track = Track::register($_POST['track']);
 		if($track != 0) {
-			$bpm = BPM::register($track, $user, $_POST, $date);
-			if(!empty($bpm))
-				$result['bpm'] = $bpm;
-			$danceGenres = DanceGenre::register($track, $user, $_POST, $date);
-			if(!empty($danceGenres))
-				$result['dance-genres'] = $danceGenres;
+			$tempo = Tempo::register($track, $user, isset($_POST['tempo']) ? $_POST['tempo'] : NULL, $date);
+			if(!empty($tempo))
+				$result['tempo'] = $tempo;
+			$dancegenres = Dancegenre::register($track, $user, empty($_POST['dancegenres']) ? array() : json_decode($_POST['dancegenres'], TRUE), $date);
+			if(!empty($dancegenres))
+				$result['dancegenres'] = $dancegenres;
+			$musicgenres = Musicgenre::register($track, $user, empty($_POST['musicgenres']) ? array() : json_decode($_POST['musicgenres'], TRUE), $date);
+			if(!empty($musicgenres))
+				$result['musicgenres'] = $musicgenres;
 		}
 		die(json_encode($result));
 	}

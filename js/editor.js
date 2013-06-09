@@ -1,14 +1,15 @@
 function Editor(player, Button, Throbber) {
 	var editing = {track: null, info: {}};
-	var container = document.getElementById('wrapper').appendChild(TW.createElement('div', 'tab-editor', 'tab'));
+	var container = TW.createTab('editor');
 	var callback;
 	
 	currentElm = container.appendChild(document.createElement('h2'));
 	var form = container.appendChild(document.createElement('form'));
 	var throbber = Throbber.forElement(form);
 	
-	var danceGenres = new DanceGenres.forEditor(form);
-	var bpm = new BPM.forEditor(form);
+	var dancegenres = new Dancegenres.forEditor(form);
+	var musicgenres = new Musicgenres.forEditor(form);
+	var tempo = new Tempo.forEditor(form);
 
 	var btn;
 	var btns = form.appendChild(document.createElement('fieldset'));
@@ -54,12 +55,13 @@ function Editor(player, Button, Throbber) {
 		else
 			currentElm.innerText = _('No track is currently being edited');
 
-		bpm.changeTrack(status);
+		tempo.changeTrack(status);
 	}
 	
 	function load() {
-		danceGenres.load(editing.info['dance-genres']);
-		bpm.load(editing.info);
+		tempo.load(editing.info);
+		dancegenres.load(editing.info.dancegenres);
+		musicgenres.load(editing.info.musicgenres);
 		changeTrack();
 		enable();
 	}
@@ -67,8 +69,9 @@ function Editor(player, Button, Throbber) {
 	function enable() {
 		btns.style.display = '';
 		throbber.hide();
-		danceGenres.enable();
-		bpm.enable();
+		tempo.enable();
+		dancegenres.enable();
+		musicgenres.enable();
 	}
 	
 	function disable() {
@@ -76,8 +79,9 @@ function Editor(player, Button, Throbber) {
 		throbber.show();
 		throbber.showContent();
 		throbber.setSize('normal');
-		danceGenres.disable();
-		bpm.disable();
+		tempo.disable();
+		dancegenres.disable();
+		musicgenres.disable();
 	};
 
 	function submit() {
@@ -86,22 +90,27 @@ function Editor(player, Button, Throbber) {
 		var data = new FormData();
 		data.append('track', editing.track.uri);
 
-		danceGenres.submit(data);
-		bpm.submit(data);
+		tempo.submit(data);
+		dancegenres.submit(data);
+		musicgenres.submit(data);
 
 		new AjaxRequest
 		(	SERVER+'register.php'
-		,	function() {
-				// Success registering info
-				var info = eval('('+this.responseText+');');
-				if(typeof callback === 'function')
-					callback(info);
-				enable();
-			}
-		,	function() {
-				// Error registering info
-				console.log('Error registering info');
-				console.log(this);
+		,	{	callback:
+				function() {
+					// Success registering info
+					var info = eval('('+this.responseText+');');
+					if(typeof callback === 'function')
+						callback(info);
+					enable();
+				}
+			,	error:
+				function() {
+					// Error registering info
+					console.log('Error registering info');
+					console.log(this);
+					enable();
+				}
 			}
 		,	data
 		);

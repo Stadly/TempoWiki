@@ -6,25 +6,28 @@ html {
 	text-align: center;
 }
 #header {
-	height: 50px;
 	font-size: 28px;
 	line-height: 50px;
+	min-height: 0;
 }
 #wrapper {
+	margin-top: 10px;
 	min-height: 50px;
 }
-.bpm {
+.tempo {
 	display: inline-block;
 	line-height: 70px;
 	font-size: 24px;
 	vertical-align: middle;
-	width: 200px;
 	text-align: left;
 }
 .units {
 	display: inline-block;
 	vertical-align: middle;
 	list-style: none;
+	white-space: nowrap;
+	width: 0;
+	margin: 0px -20px 0 20px;
 }
 .units li {
 	text-align: left;
@@ -66,7 +69,7 @@ fieldset legend {
 	text-align: left;
 	text-shadow: none;
 }
-.sp-list-cell-bpm {
+.sp-list-cell-tempo {
 	text-align: right;
 }
 .sp-list-heading-sortable:active:hover {
@@ -95,12 +98,12 @@ fieldset legend {
 .range {
 	display: inline-block;
 	vertical-align: middle;
-	margin: 0 20px -5px 0;
+	margin-bottom: -5px;
+	padding: 0 11px;
 }
 .track {
 	height: 14px;
 	width: 100%;
-	/*background: url(../img/track-left.png) left no-repeat, url(../img/track-right.png) right no-repeat, url(../img/track.png);*/
 	background: url(sp://import/img/scrollbars/light/horizontal-track-left.png) left no-repeat, url(../img/horizontal-track-right.png) right no-repeat, url(sp://import/img/scrollbars/light/horizontal-track.png);
 	margin: 0 -11px;
 	padding: 0 11px;
@@ -116,7 +119,6 @@ fieldset legend {
 .track .marked {
 	height: 100%;
 	position: relative;
-	/*background: url(../img/track-marked.png);*/
 	background: url(sp://import/img/scrollbars/light/horizontal-thumb-middle.png);
 }
 .track .marked .handle {
@@ -124,10 +126,8 @@ fieldset legend {
 	height: 14px;
 }
 .track .marked .min {
-	/*background: url(../img/knob.png);*/
 	background: url(sp://import/img/scrollbars/light/horizontal-thumb-left.png);
 }
 .track .marked .max {
-	/*background: url(../img/knob.png);*/
 	background: url(sp://import/img/scrollbars/light/horizontal-thumb-right.png);
 }

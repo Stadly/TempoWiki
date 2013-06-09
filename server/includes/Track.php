@@ -18,9 +18,9 @@ class Track {
 		require_once 'includes/Database.php';
 
 		$db = Database::getInstance();
-		$insert = $db->prepare('SELECT track FROM '.self::TABLE.' WHERE spotify = (:spotify)');
-		if($insert->execute(array('spotify' => $spotify)) && $insert->rowCount() > 0)
-			return $insert->fetch()->track;
+		$select = $db->prepare('SELECT track FROM '.self::TABLE.' WHERE spotify = (:spotify)');
+		if($select->execute(array('spotify' => $spotify)) && $select->rowCount() > 0)
+			return $select->fetch()->track;
 		
 		return 0;
 	}

@@ -5,14 +5,29 @@ function TW(application) {
 	};
 }
 
-TW.prototype.createElement = function(type, id, className, content) {
+TW.prototype.createTab = function(name) {
+	return document.getElementById('wrapper').appendChild(TW.createElement('div', {id: 'tab-'+name, className: 'tab'}));
+};
+
+TW.prototype.createElement = function(type, attrs) {
 	var elm = document.createElement(type);
-	if(typeof id !== 'undefined' && id !== null)
-		elm.id = id;
-	if(typeof className !== 'undefined' && className !== null)
-		elm.className = className;
-	if(typeof content !== 'undefined' && content !== null)
-		elm.innerHTML = content;
+	for(var attr in attrs) {
+		switch(attr) {
+			case 'id':
+			case 'className':
+			case 'name':
+			case 'type':
+			case 'value':
+				elm[attr] = attrs[attr];
+				break;
+			case 'for':
+				elm.setAttribute(attr, attrs[attr]);
+				break;
+			case 'content':
+				elm.innerHTML = attrs[attr];
+				break;
+		}
+	}
 	return elm;
 };
 
@@ -42,25 +57,10 @@ TW.prototype.sortNum = function(a, b) {
 };
 
 TW.prototype.editStatus =
-{	OK: 0
-,	NOT_EDITING: 1
-,	NOT_PLAYING: 2
-,	DIFFERENT: 3
-};
-
-Function.prototype.inheritsFrom = function(parentClassOrObject) {
-	if(parentClassOrObject.constructor === Function) {
-		//Normal Inheritance
-		this.prototype = new parentClassOrObject;
-		this.prototype.constructor = this;
-		this.prototype.parent = parentClassOrObject.prototype;
-	} else { 
-		//Pure Virtual Inheritance 
-		this.prototype = parentClassOrObject;
-		this.prototype.constructor = this;
-		this.prototype.parent = parentClassOrObject;
-	}
-	return this;
+{	OK:				0
+,	NOT_EDITING:	1
+,	NOT_PLAYING:	2
+,	DIFFERENT:		3
 };
 
 (function() {
@@ -75,7 +75,7 @@ Function.prototype.inheritsFrom = function(parentClassOrObject) {
 			var aps = Array.prototype.slice;
 			var args = aps.call(arguments, 1);
 			a = arguments;
-			translated = translated.replace(/\{([^}]+)\}/g, function(_, match){return args[match];});
+			translated = translated.replace(/\{([^}]+)\}/g, function(_,match){return args[match];});
 		}
 		
 		return translated;

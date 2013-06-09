@@ -12,22 +12,26 @@
 		
 		new AjaxRequest
 		(	SERVER+'auth.php'
-		,	function() {
-				var info = eval('('+this.responseText+');');
-				new AjaxRequest
-				(	SERVER+'auth.php?key='+getKey(info.keyhole)
-				,	function() {
-						var info = eval('('+this.responseText+');');
-						if(info.authenticated === true) {
-							authenticated = true;
-							success(info.config);
-						} else
-							failure.call(this);
-					}
-				,	failure
-				);
+		,	{	callback:
+				function() {
+					var info = eval('('+this.responseText+');');
+					new AjaxRequest
+					(	SERVER+'auth.php?key='+getKey(info.keyhole)
+					,	{	callback:
+							function() {
+								var info = eval('('+this.responseText+');');
+								if(info.authenticated === true) {
+									authenticated = true;
+									success(info.config);
+								} else
+									failure.call(this);
+							}
+						,	error: failure
+						}
+					);
+				}
+			,	error: failure
 			}
-		,	failure
 		,	data
 		);
 	};
