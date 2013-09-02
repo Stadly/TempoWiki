@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 3.5.1
+-- version 3.5.8.1
 -- http://www.phpmyadmin.net
 --
--- Host: localhost
--- Generation Time: Jun 09, 2013 at 08:10 PM
--- Server version: 5.5.24-log
--- PHP Version: 5.4.3
+-- Host: 10.246.16.134:3306
+-- Generation Time: Aug 24, 2013 at 10:49 AM
+-- Server version: 5.1.66-0+squeeze1
+-- PHP Version: 5.3.3-7+squeeze15
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -17,82 +17,326 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8 */;
 
 --
--- Database: `sp_tempowiki`
+-- Database: `myrtveitfoto_no`
 --
 
---
--- Dumping data for table `tw_dancegenre_conf`
---
-
-INSERT INTO `tw_dancegenre_conf` (`id`, `parent`, `name`, `short`, `order`) VALUES
-(1, NULL, 'Swing', 'Sw', 1),
-(2, 1, 'Boogie Woogie', 'BW', 1),
-(3, 1, 'West Coast Swing', 'WCS', 2),
-(4, 1, 'Lindy Hop', 'LH', 3),
-(5, NULL, 'Standard', 'Std', 3),
-(6, 5, 'Slow Waltz', 'SW', 1),
-(7, 5, 'Viennese Waltz', 'VW', 3),
-(8, 1, 'Charleston', 'C', 4),
-(9, 1, 'Blues', 'Bl', 5),
-(10, 1, 'Balboa', 'Bal', 6),
-(11, 1, 'Bugg', 'Bu', 7),
-(12, 1, 'Folkeswing', 'FS', 8),
-(13, 5, 'Tango', 'Ta', 2),
-(14, 5, 'Slowfox', 'SF', 4),
-(15, 5, 'Quickstep', 'QS', 5),
-(16, NULL, 'Latin', 'Lat', 4),
-(17, 16, 'Samba', 'Sam', 1),
-(18, 16, 'Cha-cha-cha', 'Cha', 2),
-(19, 16, 'Rumba', 'Rum', 3),
-(20, 16, 'Paso doble', 'PD', 4),
-(21, 16, 'Jive', 'Jiv', 5),
-(22, NULL, 'Salsa', 'Sa', 2),
-(23, 22, 'Cuban salsa', 'CS', 1),
-(24, 22, 'LA salsa', 'LA', 2),
-(25, 22, 'NY salsa', 'NY', 3),
-(26, 22, 'Bachata', 'Bac', 4),
-(27, 22, 'Son', 'Son', 5);
+-- --------------------------------------------------------
 
 --
--- Dumping data for table `tw_musicgenre_conf`
+-- Stand-in structure for view `tw_dancegenre_accu`
 --
-
-INSERT INTO `tw_musicgenre_conf` (`id`, `parent`, `name`, `short`, `order`) VALUES
-(1, NULL, 'Blues', 'Bl', 1),
-(2, NULL, 'Boogie Woogie', 'BW', 2),
-(3, NULL, 'Country', 'Co', 3),
-(4, NULL, 'Bluegrass', 'Blu', 4),
-(5, NULL, 'Dance Band', 'DB', 5),
-(6, NULL, 'Gospel', 'Go', 6),
-(7, NULL, 'Hip Hop', 'HH', 7),
-(8, NULL, 'Jazz', 'Ja', 8),
-(9, NULL, 'Dixieland', 'Dx', 9),
-(10, NULL, 'Neo Swing', 'NS', 10),
-(11, NULL, 'Swing Jazz', 'SJ', 11),
-(12, NULL, 'Pop', 'Pop', 12),
-(13, NULL, 'R&B', 'R&B', 13),
-(14, NULL, 'Disco', 'Di', 14),
-(15, NULL, 'Soul', 'So', 15),
-(16, NULL, 'Rock', 'Ro', 16),
-(17, NULL, 'Rock & Roll', 'RR', 17),
-(18, NULL, 'Rockabilly', 'Rb', 18),
-(19, NULL, 'Soundtrack', 'St', 19);
+CREATE TABLE IF NOT EXISTS `tw_dancegenre_accu` (
+`track` int(11) unsigned
+,`genre` int(11) unsigned
+,`votes` decimal(32,0)
+,`total` bigint(21)
+);
+-- --------------------------------------------------------
 
 --
--- Dumping data for table `tw_tempo_conf`
+-- Stand-in structure for view `tw_dancegenre_accu_user`
+--
+CREATE TABLE IF NOT EXISTS `tw_dancegenre_accu_user` (
+`track` int(11) unsigned
+,`genre` int(11) unsigned
+,`user` int(11) unsigned
+,`value` decimal(36,4)
+);
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_dancegenre_conf`
 --
 
-INSERT INTO `tw_tempo_conf` (`property`, `value`) VALUES
-('rangeMin', 0),
-('rangeMax', 400);
+CREATE TABLE IF NOT EXISTS `tw_dancegenre_conf` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `parent` int(11) unsigned DEFAULT NULL,
+  `name` varchar(50) COLLATE utf8_swedish_ci NOT NULL,
+  `short` varchar(10) COLLATE utf8_swedish_ci NOT NULL,
+  `order` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
 
 --
--- Dumping data for table `tw_tempo_conf_unit`
+-- Table structure for table `tw_dancegenre_reg`
 --
 
-INSERT INTO `tw_tempo_conf_unit` (`id`, `name`, `unit`, `multiplier`, `order`) VALUES
-(1, 'BPM', 'bpm', '1.00', 1),
-(2, 'Bar', 'bar', '0.25', 2);
+CREATE TABLE IF NOT EXISTS `tw_dancegenre_reg` (
+  `track` int(11) unsigned NOT NULL,
+  `genre` int(11) unsigned NOT NULL,
+  `value` int(11) NOT NULL,
+  `user` int(11) unsigned NOT NULL,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`track`,`genre`,`user`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `tw_musicgenre_accu`
+--
+CREATE TABLE IF NOT EXISTS `tw_musicgenre_accu` (
+`track` int(11) unsigned
+,`genre` int(11) unsigned
+,`votes` decimal(32,0)
+,`total` bigint(21)
+);
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `tw_musicgenre_accu_user`
+--
+CREATE TABLE IF NOT EXISTS `tw_musicgenre_accu_user` (
+`track` int(11) unsigned
+,`genre` int(11) unsigned
+,`user` int(11) unsigned
+,`value` decimal(36,4)
+);
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_musicgenre_conf`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_musicgenre_conf` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `parent` int(11) unsigned DEFAULT NULL,
+  `name` varchar(50) COLLATE utf8_swedish_ci NOT NULL,
+  `short` varchar(10) COLLATE utf8_swedish_ci NOT NULL,
+  `order` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_musicgenre_reg`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_musicgenre_reg` (
+  `track` int(11) unsigned NOT NULL,
+  `genre` int(11) unsigned NOT NULL,
+  `value` int(11) NOT NULL,
+  `user` int(11) unsigned NOT NULL,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`track`,`genre`,`user`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_plays_reg`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_plays_reg` (
+  `track` int(11) unsigned NOT NULL,
+  `played` decimal(20,20) unsigned NOT NULL,
+  `user` int(11) unsigned NOT NULL,
+  `date` datetime NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_profile`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_profile` (
+  `profile` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8_swedish_ci NOT NULL,
+  `user` int(11) unsigned NOT NULL,
+  `active` tinyint(1) unsigned NOT NULL,
+  PRIMARY KEY (`profile`),
+  KEY `user` (`user`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_profile_dancegenre`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_profile_dancegenre` (
+  `profile` int(11) unsigned NOT NULL,
+  `genre` int(11) unsigned NOT NULL,
+  UNIQUE KEY `unique` (`profile`,`genre`),
+  KEY `profile` (`profile`),
+  KEY `dancegenre` (`genre`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_profile_musicgenre`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_profile_musicgenre` (
+  `profile` int(11) unsigned NOT NULL,
+  `genre` int(11) unsigned NOT NULL,
+  UNIQUE KEY `unique` (`profile`,`genre`),
+  KEY `profile` (`profile`),
+  KEY `musicgenre` (`genre`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_profile_tempo`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_profile_tempo` (
+  `profile` int(11) unsigned NOT NULL,
+  `min` int(4) unsigned DEFAULT NULL,
+  `max` int(4) unsigned DEFAULT NULL,
+  PRIMARY KEY (`profile`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_profile_tempo_unit`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_profile_tempo_unit` (
+  `profile` int(11) unsigned NOT NULL,
+  `unit` int(11) unsigned NOT NULL,
+  `default` tinyint(1) unsigned NOT NULL,
+  UNIQUE KEY `unique` (`profile`,`unit`),
+  KEY `profile` (`profile`),
+  KEY `unit` (`unit`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `tw_tempo_accu`
+--
+CREATE TABLE IF NOT EXISTS `tw_tempo_accu` (
+`track` int(11) unsigned
+,`tempo` double unsigned
+,`votes` bigint(21)
+,`total` bigint(21)
+);
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_tempo_conf`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_tempo_conf` (
+  `property` varchar(255) COLLATE utf8_swedish_ci NOT NULL,
+  `value` int(11) NOT NULL,
+  PRIMARY KEY (`property`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_tempo_conf_unit`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_tempo_conf_unit` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) COLLATE utf8_swedish_ci NOT NULL,
+  `unit` varchar(50) COLLATE utf8_swedish_ci NOT NULL,
+  `multiplier` decimal(10,2) NOT NULL,
+  `order` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `unit` (`unit`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_tempo_reg`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_tempo_reg` (
+  `track` int(11) unsigned NOT NULL,
+  `tempo` double unsigned NOT NULL,
+  `user` int(11) unsigned NOT NULL,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`track`,`user`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_tracks`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_tracks` (
+  `track` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `spotify` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`track`),
+  UNIQUE KEY `spotify` (`spotify`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tw_users`
+--
+
+CREATE TABLE IF NOT EXISTS `tw_users` (
+  `user` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `identifier` varchar(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`user`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `identifier` (`identifier`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `tw_dancegenre_accu`
+--
+DROP TABLE IF EXISTS `tw_dancegenre_accu`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`myrtveitfoto_no`@`%` SQL SECURITY DEFINER VIEW `tw_dancegenre_accu` AS select `tw_dancegenre_reg`.`track` AS `track`,`tw_dancegenre_reg`.`genre` AS `genre`,sum(`tw_dancegenre_reg`.`value`) AS `votes`,count(0) AS `total` from `tw_dancegenre_reg` group by `tw_dancegenre_reg`.`track`,`tw_dancegenre_reg`.`genre`;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `tw_dancegenre_accu_user`
+--
+DROP TABLE IF EXISTS `tw_dancegenre_accu_user`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`myrtveitfoto_no`@`%` SQL SECURITY DEFINER VIEW `tw_dancegenre_accu_user` AS select `dc`.`track` AS `track`,`dc`.`genre` AS `genre`,`u`.`user` AS `user`,if((ifnull(`dr`.`value`,0) = 0),(`dc`.`votes` / `dc`.`total`),`dr`.`value`) AS `value` from ((`tw_dancegenre_accu` `dc` join `tw_users` `u`) left join `tw_dancegenre_reg` `dr` on(((`dc`.`track` = `dr`.`track`) and (`dc`.`genre` = `dr`.`genre`) and (`u`.`user` = `dr`.`user`)))) where (if((ifnull(`dr`.`value`,0) = 0),(`dc`.`votes` / `dc`.`total`),`dr`.`value`) >= 0.5);
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `tw_musicgenre_accu`
+--
+DROP TABLE IF EXISTS `tw_musicgenre_accu`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`myrtveitfoto_no`@`%` SQL SECURITY DEFINER VIEW `tw_musicgenre_accu` AS select `tw_musicgenre_reg`.`track` AS `track`,`tw_musicgenre_reg`.`genre` AS `genre`,sum(`tw_musicgenre_reg`.`value`) AS `votes`,count(0) AS `total` from `tw_musicgenre_reg` group by `tw_musicgenre_reg`.`track`,`tw_musicgenre_reg`.`genre`;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `tw_musicgenre_accu_user`
+--
+DROP TABLE IF EXISTS `tw_musicgenre_accu_user`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`myrtveitfoto_no`@`%` SQL SECURITY DEFINER VIEW `tw_musicgenre_accu_user` AS select `dc`.`track` AS `track`,`dc`.`genre` AS `genre`,`u`.`user` AS `user`,if((ifnull(`dr`.`value`,0) = 0),(`dc`.`votes` / `dc`.`total`),`dr`.`value`) AS `value` from ((`tw_musicgenre_accu` `dc` join `tw_users` `u`) left join `tw_musicgenre_reg` `dr` on(((`dc`.`track` = `dr`.`track`) and (`dc`.`genre` = `dr`.`genre`) and (`u`.`user` = `dr`.`user`)))) where (if((ifnull(`dr`.`value`,0) = 0),(`dc`.`votes` / `dc`.`total`),`dr`.`value`) >= 0.5);
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `tw_tempo_accu`
+--
+DROP TABLE IF EXISTS `tw_tempo_accu`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`myrtveitfoto_no`@`%` SQL SECURITY DEFINER VIEW `tw_tempo_accu` AS select `r`.`track` AS `track`,`r`.`tempo` AS `tempo`,count(0) AS `votes`,(select count(0) from `tw_tempo_reg` `a` where (`a`.`track` = `r`.`track`)) AS `total` from `tw_tempo_reg` `r` group by `r`.`track`,`r`.`tempo`;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

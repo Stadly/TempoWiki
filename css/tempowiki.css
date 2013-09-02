@@ -131,3 +131,36 @@ fieldset legend {
 .track .marked .max {
 	background: url(sp://import/img/scrollbars/light/horizontal-thumb-right.png);
 }
+.sp-tabbar-tab {
+	white-space: pre;
+}
+.button-input {
+	border: 0;
+	position: relative;
+}
+.sp-tabbar .admin-icon {
+	height: 12px;
+	width: 12px;
+	display: none;
+}
+.sp-tabbar .admin-icon:hover {
+	background-position-x: -12px;
+}
+.sp-tabbar .admin-icon:hover:active {
+	background-position-x: -24px;
+}
+.tabbar-profiler .profile-new {
+	display: inline-block;
+	margin: -2px 2px;
+	background-image: url(../img/profile-new.png);
+}
+.tabbar-profiler .sp-tabbar-tab-active .profile-edit {
+	display: inline-block;
+	margin: -2px 0 -2px 6px;
+	background-image: url(../img/profile-edit.png);
+}
+.tabbar-profiler .sp-tabbar-tab-active .profile-delete {
+	display: inline-block;
+	margin: -2px -2px -2px 4px;
+	background-image: url(../img/profile-delete.png);
+}

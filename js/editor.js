@@ -3,7 +3,7 @@ function Editor(player, Button, Throbber) {
 	var container = TW.createTab('editor');
 	var callback;
 	
-	currentElm = container.appendChild(document.createElement('h2'));
+	var currentElm = container.appendChild(document.createElement('h2'));
 	var form = container.appendChild(document.createElement('form'));
 	var throbber = Throbber.forElement(form);
 	
@@ -51,7 +51,7 @@ function Editor(player, Button, Throbber) {
 			status = TW.editStatus.NOT_EDITING;
 		
 		if(editing.track !== null)
-			currentElm.innerHTML = _('Currently editing:')+' '+TW.trackToString(editing.track);
+			currentElm.innerHTML = _('Currently editing: {0}', TW.trackToString(editing.track));
 		else
 			currentElm.innerText = _('No track is currently being edited');
 
@@ -82,7 +82,7 @@ function Editor(player, Button, Throbber) {
 		tempo.disable();
 		dancegenres.disable();
 		musicgenres.disable();
-	};
+	}
 
 	function submit() {
 		disable();

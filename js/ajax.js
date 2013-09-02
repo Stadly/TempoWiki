@@ -4,19 +4,19 @@ function AjaxRequest(uri, callback, post) {
 	if(typeof(callback) === 'function')
 		xhr.callback = callback;
 	else if(typeof(callback) === 'object') {
-		if('callback' in callback)
+		if(callback.hasOwnProperty('callback'))
 			xhr.callback = callback.callback;
-		if('loadstart' in callback)
+		if(callback.hasOwnProperty('loadstart'))
 			xhr.upload.addEventListener('loadstart', callback.loadstart);
-		if('progress' in callback)
+		if(callback.hasOwnProperty('progress'))
 			xhr.upload.addEventListener('progress', callback.progress);
-		if('load' in callback)
+		if(callback.hasOwnProperty('load'))
 			xhr.upload.addEventListener('load', callback.load);
-		if('error' in callback) {
+		if(callback.hasOwnProperty('error')) {
 			xhr.error = callback.error;
 			xhr.upload.addEventListener('error', callback.error);
 		}
-		if('abort' in callback)
+		if(callback.hasOwnProperty('abort'))
 			xhr.upload.addEventListener('abort', callback.abort);
 	}
 

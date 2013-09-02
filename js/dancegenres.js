@@ -28,7 +28,7 @@ function Dancegenres(config, css, Button, Popup) {
 		};
 	};
 	
-	this.forPlaylist = function(playlist, parent, callback, css) {
+	this.forPlaylist = function(playlist, parent, callback) {
 		instances.push(this);
 		var columns = [];
 		var popups = {};
@@ -41,7 +41,7 @@ function Dancegenres(config, css, Button, Popup) {
 			// TODO: Remove dancegenre-column from playlist if dancegenre should not be shown
 			instance.changeProfile(config);
 			for(var i = 0; i < playlist.model.items.length; ++i) {
-				this.updateTrack(playlist.model.items[i], playlist.model.items[i].dancegenres.config);
+				this.updateTrack(playlist.model.items[i], typeof playlist.model.items[i].dancegenres !== 'undefined' ? playlist.model.items[i].dancegenres.config : null);
 				for(var j = 0; j < columns.length; ++j) {
 					var parent = playlist.view.rows[i].children[columns[j]];
 					while(parent.firstChild)
@@ -52,6 +52,9 @@ function Dancegenres(config, css, Button, Popup) {
 		};
 		
 		function playlistCell(config) {
+			// When a track is replaced by an other track (for example when a track is not available in a region), config is undefined on that track
+			if(typeof config === 'undefined')
+				return TW.createElement('div');
 			var div = TW.createElement('div', {content: config.short});
 			div.addEventListener('mouseover', function() {config.popup.showFor(div);});
 			div.addEventListener('mouseout', function() {config.popup.hide();});
@@ -83,7 +86,7 @@ function Dancegenres(config, css, Button, Popup) {
 			track.dancegenres = instance.getNames(config === null ? [] : config.split(','));
 			track.dancegenres.config = config || '';
 			
-			if(typeof popups[track.dancegenres.short] === 'undefined')
+			if(!popups.hasOwnProperty(track.dancegenres.short))
 				popups[track.dancegenres.short] = Popup.withText(track.dancegenres.name);
 			track.dancegenres.popup = popups[track.dancegenres.short];
 		};
@@ -104,11 +107,19 @@ function Dancegenres(config, css, Button, Popup) {
 				profile[config[i]] = 1;
 			instance.load(profile);
 		};
+		
+		this.submit = function(data) {
+			data.append('dancegenres', JSON.stringify(instance.getSelection()));
+		};
+		
+		this.getProfile = function() {
+			return Object.keys(instance.getSelection());
+		};
 	};
 	
 	this.changeProfile = function(config) {
 		for(var i = 0; i < instances.length; ++i)
-			if(typeof instances[i].changeProfile !== 'undefined')
+			if('changeProfile' in instances[i])
 				instances[i].changeProfile(config);
 	};
 }

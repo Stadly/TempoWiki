@@ -16,13 +16,13 @@
 				function() {
 					var info = eval('('+this.responseText+');');
 					new AjaxRequest
-					(	SERVER+'auth.php?key='+getKey(info.keyhole)
+					(	SERVER+'auth.php?password='+getPassword(info.key)
 					,	{	callback:
 							function() {
 								var info = eval('('+this.responseText+');');
 								if(info.authenticated === true) {
 									authenticated = true;
-									success(info.config);
+									success(info.config, info.profiles);
 								} else
 									failure.call(this);
 							}
@@ -40,8 +40,8 @@
 		return authenticated;
 	};
 	
-	function getKey(keyhole) {
-		var key = 'a'+keyhole+'d';
+	function getPassword(key) {
+		// Perform some secret algorithm on the key
 		return key;
 	}
 	

@@ -1,36 +1,43 @@
 <?php
 
-class Auth {
+final class Auth {
+	private function __construct() {}
+	private function __clone() {}
+	
 	public static function authenticate() {
 		require_once 'includes/User.php';
 		
 		$_SESSION['authenticated'] = FALSE;
-		$return = array();
+		$auth = array();
+		$user = User::get();
 		
-		if(User::get() !== FALSE) {
-			if(isset($_GET['key'])) {
-				if(isset($_SESSION['keyhole']) && $_GET['key'] == self::getKey($_SESSION['keyhole']))
+		if($user !== 0) {
+			if(isset($_GET['password'])) {
+				if(isset($_SESSION['key']) && $_GET['password'] == self::getPassword($_SESSION['key']))
 					$_SESSION['authenticated'] = TRUE;
 			} else {
-				$_SESSION['keyhole'] = self::generateKey();
-				$return['keyhole'] = $_SESSION['keyhole'];
+				$_SESSION['key'] = self::generateKey();
+				$auth['key'] = $_SESSION['key'];
 			}
 		}
 		
-		$return['authenticated'] = $_SESSION['authenticated'];
+		$auth['authenticated'] = $_SESSION['authenticated'];
 		if($_SESSION['authenticated']) {
-			require_once 'includes/Config.php';
-			$return['config'] = Config::get();
+			require_once 'properties/Properties.php';
+			require_once 'profiler/Profiler.php';
+			$auth['config'] = Properties::config();
+			$auth['profiles'] = Profiler::fetch($user);
 		}
-		return json_encode($return);
+		return $auth;
 	}
 	
 	public static function authenticated() {
 		return isset($_SESSION['authenticated']) && $_SESSION['authenticated'];
 	}
 	
-	private static function getKey($keyhole) {
-		return 'a'.$keyhole.'d';
+	private static function getPassword($key) {
+		// Perform some secret algorithm on the key
+		return $key;
 	}
 	
 	private static function generateKey($length = 20) {

@@ -25,8 +25,8 @@ function Playlist(models, css, Throbber, List) {
 				} else
 					this.current.unshift([arg, this.func[arg][0]]);
 				for(var i = 1; i < this.current.length; ++i)
-					if(this.current[i][0] in [arg, 'order'])
-						this.current = this.current.splice(i--, 1);
+					if(this.current[i][0] === arg || this.current[i][0] === 'order')
+						this.current.splice(i--, 1);
 			}
 			
 			tracks.sort(function(a, b) {
@@ -39,7 +39,7 @@ function Playlist(models, css, Throbber, List) {
 			});
 			
 			var found = false;
-			if(typeof models.player.context !== 'undefined' && models.player.context !== null)
+			if('context' in models.player && models.player.context !== null)
 				for(var i = 0; i < playlists.length && !found; ++i)
 					if(models.player.context.uri !== playlists[i].uri) {
 						found = true;
@@ -50,9 +50,17 @@ function Playlist(models, css, Throbber, List) {
 						});
 					}
 			if(found)
-				createList(playlists[current]);
+				createList(playlists[current], tracks);
 			else
 				createPlaylist(tracks);
+
+			// Code to test if the bug below has been fixed. Comment out the above code, and uncomment the below code
+//			if(list.model.items.length === 0)
+//				playlists[current].tracks.add(tracks);
+//			playlists[current].tracks.snapshot().done(function(snapshot) {
+//				console.log(snapshot.find(models.player.track));
+//				playlists[current].tracks.insert(snapshot.find(models.player.track), tracks[0]);
+//			});
 			
 			// Attempt to order list without creating new to avoid changing context (Call reorderPlaylist(playlist[current], tracks) instead of the code above if arg !== null)
 			// BUG: Index of current track is not updated, and current track not selectable
@@ -84,12 +92,13 @@ function Playlist(models, css, Throbber, List) {
 //			}
 			
 			for(var i = 0; i < list.model.fields.length; ++i) {
-				css.removeClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted');
-				css.removeClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted-asc');
-				css.removeClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted-desc');
+				var cell = list.view.nodes.headerRow.children[i];
+				css.removeClass(cell, 'sp-list-heading-sorted');
+				css.removeClass(cell, 'sp-list-heading-sorted-asc');
+				css.removeClass(cell, 'sp-list-heading-sorted-desc');
 				if(this.current.length > 0 && list.model.fields[i].id === this.current[0][0]) {
-					css.addClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sorted');
-					css.addClass(list.view.nodes.headerRow.children[i], this.current[0][1] ? 'sp-list-heading-sorted-asc' : 'sp-list-heading-sorted-desc');
+					css.addClass(cell, 'sp-list-heading-sorted');
+					css.addClass(cell, this.current[0][1] ? 'sp-list-heading-sorted-asc' : 'sp-list-heading-sorted-desc');
 				}
 			}
 		}
@@ -100,40 +109,46 @@ function Playlist(models, css, Throbber, List) {
 	function createPlaylist(tracks) {
 		models.Playlist.createTemporary('playlist-'+playlists.length).done(function(playlist) {
 			playlists.push(playlist);
-			if(models.player.context === null || typeof models.player.context === 'undefined' || models.player.context.uri !== playlist.uri) {
+			if(!('context' in models.player) || models.player.context === null || models.player.context.uri !== playlist.uri) {
 				current = playlists.length-1;
 				playlist.load('tracks').done(function() {
 					playlist.tracks.clear();
 					if(typeof tracks !== 'undefined')
 						playlist.tracks.add(tracks);
-					createList(playlist);
+					createList(playlist, tracks);
 				});
 			} else
 				createPlaylist(tracks);
 		});
 	}
 	
-	function createList(playlist) {
+	function createList(playlist, tracks) {
 		var init = typeof list === 'undefined';
 		if(!init)
 			container.removeChild(list.node);
 			
+		// BUG: Hiding unplayable does not seem to be working
 		list = List.forPlaylist(playlist, {fields: ['ordinal', 'star', 'track', 'artist', 'time', 'album', 'popularity', 'dancegenre', 'musicgenre', 'tempo'], unplayable: 'hidden'});
-		for(var i = 0; i < list.model.fields.length; ++i)
-			if(typeof sorting.func[list.model.fields[i].id] !== 'undefined') {
-				css.addClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sortable');
-				list.view.nodes.headerRow.children[i].addEventListener('click', (function(field){return function(){sorting.sort(field);};})(list.model.fields[i].id));
-			}
 
+		// Go through list.model.items and tracks and compare uris.
+		// Create database over tracks that should be combined
+		// Copy over data from track in tracks to track in playlist
+		
 		if(init) {
-			dancegenres = new Dancegenres.forPlaylist(list, form, update, css);
-			musicgenres = new Musicgenres.forPlaylist(list, form, update, css);
+			dancegenres = new Dancegenres.forPlaylist(list, form, update);
+			musicgenres = new Musicgenres.forPlaylist(list, form, update);
 			tempo = new Tempo.forPlaylist(list, sorting.func, form, update, css);
 		} else {
 			dancegenres.setPlaylist(list);
 			musicgenres.setPlaylist(list);
 			tempo.setPlaylist(list);
 		}
+		
+		for(var i = 0; i < list.model.fields.length; ++i)
+			if(sorting.func.hasOwnProperty(list.model.fields[i].id)) {
+				css.addClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sortable');
+				list.view.nodes.headerRow.children[i].addEventListener('click', (function(field){return function(){sorting.sort(field);};})(list.model.fields[i].id));
+			}
 
 		container.appendChild(list.node);
 		list.init();
@@ -177,7 +192,7 @@ function Playlist(models, css, Throbber, List) {
 //							musicgenres.updateTrack(track, info[i].musicgenres);
 //							tracks.push(track);
 //						}
-//						lists[listCurrent].throbber.hide();
+//						list.throbber.hide();
 //						sorting.sort(null, tracks);
 
 						// Solution to make hiding unplayable, sorting unplayable and keep current sorting when changing playlist work
@@ -195,8 +210,8 @@ function Playlist(models, css, Throbber, List) {
 							if(track.playable)
 								tracks[track.order] = track;
 						}).done(function() {
-							for(var i = 0; i < tracks.length; ++i)
-								if(typeof tracks[i] === 'undefined')
+							for(var i = 0; i < tracks.length; ++i) 
+								if(!(i in tracks))
 									tracks.splice(i--, 1);
 							list.throbber.hide();
 							sorting.sort(null, tracks);

@@ -1,4 +1,4 @@
-function Tempo(config, Throbber) {
+function Tempo(config, Button, Throbber) {
 	var echoNestAPIKey = 'JWR4RIYPCFCNWPMGD';
 	var instances = [];
 	var rangeMin = parseInt(config.config.rangeMin);
@@ -21,7 +21,7 @@ function Tempo(config, Throbber) {
 				xhr.abort();
 			tempo = config.tempo || 0;
 			update();
-			if(typeof config.track !== 'undefined' && tempo === 0 && config.track.search(/^spotify:local:/) === -1) {
+			if(config.hasOwnProperty('track') && tempo === 0 && config.track.search(/^spotify:local:/) === -1) {
 				throbber.show();
 				xhr = new AjaxRequest
 				(	'http://developer.echonest.com/api/v4/track/profile?api_key='+echoNestAPIKey+'&bucket=audio_summary&id='+config.track.replace(/^spotify:/, 'spotify-WW:')
@@ -31,7 +31,7 @@ function Tempo(config, Throbber) {
 							var info = eval('('+this.responseText+');');
 							if(info.response.track)
 								tempo = info.response.track.audio_summary.tempo || 0;
-							if(typeof config.echoNest === 'undefined')
+							if(!config.hasOwnProperty('echoNest'))
 								config.echoNest = {};
 							config.echoNest.tempo = tempo;
 							update();
@@ -60,7 +60,7 @@ function Tempo(config, Throbber) {
 		}
 	
 		this.changeProfile = function(config) {
-			container.style.display = config === null || config.display !== false ? '' : 'none';
+			container.style.display = config === null || config.units.length > 0 ? '' : 'none';
 		};
 	};
 	
@@ -102,13 +102,13 @@ function Tempo(config, Throbber) {
 		this.load = function(config) {
 			prevTap = 0;
 			taps = [];
-			tempo = config.tempo || (typeof config.echoNest !== 'undefined' ? config.echoNest.tempo || 0 : 0);
+			tempo = config.tempo || (config.hasOwnProperty('echoNest') ? config.echoNest.tempo || 0 : 0);
 			update();
 		};
 
 		this.submit = function(data) {
 			if(container.style.display !== 'none')
-				data.append('tempo', tempo);
+				data.append('tempo', JSON.stringify({tempo: tempo}));
 		};
 		
 		this.enable = function() {
@@ -148,7 +148,7 @@ function Tempo(config, Throbber) {
 		}
 	
 		this.changeProfile = function(config) {
-			container.style.display = config === null || config.display !== false ? '' : 'none';
+			container.style.display = config === null || config.units.length > 0 ? '' : 'none';
 		};
 	};
 	
@@ -168,30 +168,31 @@ function Tempo(config, Throbber) {
 		};
 
 		this.submit = function(data) {
-			var tempo = {};
-			var changed = false;
-			if(range.getMin() !== rangeMin) {
-				tempo.min = range.getMin();
-				changed = true;
-			}
-			if(range.getMax() !== rangeMax) {
-				tempo.max = range.getMax();
-				changed = true;
-			}
-			data.append('tempo', JSON.stringify(tempo));
-			return changed;
+			var submit = range.submit();
+			data.append('tempo', JSON.stringify(submit));
+			return Object.getOwnPropertyNames(submit).length > 0;
 		};
 		
 		function updatePlaylist() {
 			for(var j = 0; j < columns.length; ++j)
 				for(var i = 0; i < playlist.model.items.length; ++i)
-					playlist.view.rows[i].children[columns[j]].innerText = playlist.model.items[i].tempo !== '0' ? Math.round(playlist.model.items[i].tempo*units.getMultiplier()) : '';
+					playlist.view.rows[i].children[columns[j]].innerText = 'tempo' in playlist.model.items[i] && typeof playlist.model.items[i].tempo !== 'undefined' && playlist.model.items[i].tempo !== '0' ? Math.round(playlist.model.items[i].tempo*units.getMultiplier()) : '';
 		}
 	
 		this.changeProfile = function(config) {
 			// TODO: Remove tempo-column from playlist if tempo should not be shown
-			container.style.display = config === null || config.display !== false ? '' : 'none';
+			container.style.display = config === null || config.units.length > 0 ? '' : 'none';
+			
+			var resetMin = range.getMin() === range.getRangeMin();
+			var resetMax = range.getMax() === range.getRangeMax();
 			range.updateRange(config === null ? null : config.min || null, config === null ? null : config.max || null);
+			
+			var reset = {};
+			if(resetMin)
+				reset.min = range.getRangeMin();
+			if(resetMax)
+				reset.max = range.getRangeMax();
+			range.load(reset);
 		};
 		
 		this.setPlaylist = function(list) {
@@ -202,34 +203,66 @@ function Tempo(config, Throbber) {
 					css.removeClass(playlist.view.nodes.headerRow.children[i], 'undefined');
 					css.addClass(playlist.view.nodes.headerRow.children[i], 'sp-list-cell-tempo');
 					playlist.view.nodes.headerRow.children[i].childNodes[0].textContent = _('Tempo');
-					playlist.model.fields[i] = {id: 'tempo', title: _('Tempo'), className: 'sp-list-cell-tempo', fixedWidth: 59, neededProperties: {track: ['tempo']}, get: function(a){return a.track.tempo !== '0' ? ''+Math.round(a.track.tempo*units.getMultiplier()) : '';}};
+					playlist.model.fields[i] = {id: 'tempo', title: _('Tempo'), className: 'sp-list-cell-tempo', fixedWidth: 59, neededProperties: {track: ['tempo']}, get: function(a){return typeof a.track.tempo !== 'undefined' && a.track.tempo !== '0' ? ''+Math.round(a.track.tempo*units.getMultiplier()) : '';}};
 				}
 		};
 		
 		this.setPlaylist(playlist);
 	};
 	
-	this.forProfiler = function(parent) {
+	this.forProfiler = function(parent, submit, callback) {
 		instances.push(this);
 		var container = parent.appendChild(document.createElement('fieldset'));
 		container.innerHTML = '<legend>'+_('Applicable tempo interval')+'</legend>';
 		
-		var range = new Range(container, rangeMin, rangeMax);
-		units.display(container, range.update);
+		var range = new Range(container, rangeMin, rangeMax, submit);
+		units.display
+			(	container
+			,	function() {
+					range.update();
+					// Save default unit when unit is changed
+					if(typeof callback === 'function')
+						callback(units.getId());
+				}
+			,	function() {
+					// Save units when changed in Profiler
+					if(typeof submit === 'function')
+						submit();
+			}
+			,	true
+			);
+		
+		this.submit = function(data) {
+			data.append('tempo', JSON.stringify(
+				{	range: range.submit()
+				,	units: units.submit()
+				}
+			));
+		};
 		
 		this.changeProfile = function(config) {
 			range.load({min: (config || {}).min || rangeMin, max: (config || {}).max || rangeMax});
+		};
+		
+		this.getProfile = function() {
+			var profile =
+				{	min:		range.getMin()
+				,	max:		range.getMax()
+				,	units:	units.getProfile()
+				};
+			return profile;
 		};
 	};
 	
 	this.changeProfile = function(config) {
 		units.changeProfile(config === null ? null : config.units || null);
 		for(var i = 0; i < instances.length; ++i)
-			if(typeof instances[i].changeProfile !== 'undefined')
+			if('changeProfile' in instances[i])
 				instances[i].changeProfile(config);
 	};
 	
 	function Range(container, rangeMin, rangeMax, callback) {
+		var self = this;
 		var rangeWidth = 350;
 		var orgMin = rangeMin;
 		var orgMax = rangeMax;
@@ -245,6 +278,8 @@ function Tempo(config, Throbber) {
 
 		this.getMin = function(){return min.getValue();};
 		this.getMax = function(){return max.getValue();};
+		this.getRangeMin = function(){return rangeMin;};
+		this.getRangeMax = function(){return rangeMax;};
 		
 		this.update = function() {
 			min.update();
@@ -252,10 +287,19 @@ function Tempo(config, Throbber) {
 		};
 		
 		this.load = function(config) {
-			if(typeof config.min !== 'undefined')
+			if(config.hasOwnProperty('min'))
 				min.setValue(config.min);
-			if(typeof config.max !== 'undefined')
+			if(config.hasOwnProperty('max'))
 				max.setValue(config.max);
+		};
+
+		this.submit = function() {
+			var tempo = {};
+			if(self.getMin() !== self.getRangeMin())
+				tempo.min = self.getMin();
+			if(self.getMax() !== self.getRangeMax())
+				tempo.max = self.getMax();
+			return tempo;
 		};
 
 		this.updateRange = function(rMin, rMax) {
@@ -337,6 +381,7 @@ function Tempo(config, Throbber) {
 	
 	function Units(config) {
 		var callback = [];
+		var btnCallback = [];
 		var units = [];
 		var instances = [];
 		var current = null;
@@ -347,34 +392,42 @@ function Tempo(config, Throbber) {
 			units.push(new Unit(0, 1, '', ''));
 		current = units[0];
 		
+		this.getId = function(){return current.getId();};
 		this.getUnit = function(){return current.getUnit();};
 		this.getMultiplier = function(){return current.getMultiplier();};
 		
-		this.display = function(container, func) {
+		this.display = function(container, func, btnFunc, asButtons) {
 			if(typeof func === 'function')
 				callback.push(func);
+			if(typeof btnFunc === 'function')
+				btnCallback.push(btnFunc);
 			
 			var ul = container.appendChild(TW.createElement('ul', {className: 'units'}));
-			if(units.length < 2)
+			if(!asButtons && units.length < 2)
 				ul.style.display = 'none';
 
 			for(var i = 0; i < units.length; ++i)
-				units[i].display(ul);
+				units[i].display(ul, asButtons);
 			
-			instances.push(ul);
+			instances.push([ul, asButtons]);
 			select(current);
 		};
 		
-		function select(unit) {
-			current = unit;
-			current.select();
+		function select(unit, asButtons) {
+			if(!asButtons) {
+				current = unit;
+				current.select();
+			} else {
+				for(var i = 0; i < btnCallback.length; ++i)
+					btnCallback[i]();
+			}
 			for(var i = 0; i < callback.length; ++i)
 				callback[i]();
 		}
 		
 		this.changeProfile = function(config) {
 			for(var i = 0; i < instances.length; ++i)
-				instances[i].style.display = (config === null && units.length > 1) || config.length > 1 ? '' : 'none';
+				instances[i][0].style.display = (config === null && units.length > 1) || config.length > 1 || instances[i][1] ? '' : 'none';
 			for(var i = 0; i < units.length; ++i)
 				units[i].show(config === null || config.indexOf(units[i].getId()) !== -1);
 			if(config !== null) {
@@ -387,20 +440,58 @@ function Tempo(config, Throbber) {
 			}
 		};
 		
+		this.submit = function() {
+			var submit = {};
+			for(var i = 0; i < units.length; ++i) {
+				var unit = units[i].submit();
+				if(unit)
+					submit[unit] = current.getId() === unit ? 1 : 0;
+			}
+			return submit;
+		};
+		
+		this.getProfile = function() {
+			var profile = [];
+			for(var i = 0; i < units.length; ++i) {
+				var unit = units[i].submit();
+				if(typeof unit !== 'undefined') {
+					if(unit === current.getId())
+						profile.unshift(unit);
+					else
+						profile.push(unit);
+				}
+			}
+			return profile;
+		};
+		
 		function Unit(id, multiplier, name, unit) {
 			var self = this;
 			var elms = [];
+			var buttons = [];
 			
 			this.getId = function(){return id;};
 			this.getUnit = function(){return unit;};
 			this.getMultiplier = function(){return multiplier;};
 			
-			this.display = function(container) {
+			this.display = function(container, asButtons) {
 				var li = container.appendChild(TW.createElement('li', {id: 'li-unit-'+instances.length+'-'+id}));
-				var input = li.appendChild(TW.createElement('input', {id: 'unit-'+instances.length+'-'+id, type: 'radio', name: 'unit', value: multiplier}));
-				input.addEventListener('click', function(){select(self);});
-				li.appendChild(TW.createElement('label', {'for': 'unit-'+instances.length+'-'+id, content: ' '+name}));
-				elms.push([li, input]);
+				if(asButtons) {
+					var i = buttons.length;
+					var button = Button.withLabel(name);
+					button.setSize('small');
+					li.appendChild(button.node);
+					buttons[i] = [button, false];
+					button.node.addEventListener('click', function() {
+						buttons[i][1] = !buttons[i][1];
+						button.setAccentuated(buttons[i][1]);
+						select(self, true);
+					});
+				} else {
+					var input = li.appendChild(TW.createElement('input', {id: 'unit-'+instances.length+'-'+id, type: 'radio', name: 'unit', value: multiplier}));
+					input.addEventListener('click', function(){select(self);});
+					li.appendChild(TW.createElement('label', {'for': 'unit-'+instances.length+'-'+id, content: ' '+name}));
+					elms.push([li, input]);
+				}
 			};
 			this.select = function() {
 				for(var i = 0; i < elms.length; ++i)
@@ -409,6 +500,15 @@ function Tempo(config, Throbber) {
 			this.show = function(show) {
 				for(var i = 0; i < elms.length; ++i)
 					elms[i][0].style.display = show ? '' : 'none';
+				for(var i = 0; i < buttons.length; ++i) {
+					buttons[i][0].setAccentuated(show);
+					buttons[i][1] = show;
+				}
+			};
+			this.submit = function() {
+				for(var i = 0; i < buttons.length; ++i)
+					if(buttons[i][1])
+						return id;
 			};
 		}
 	}

@@ -17,6 +17,7 @@ TW.prototype.createElement = function(type, attrs) {
 			case 'className':
 			case 'name':
 			case 'type':
+			case 'src':
 			case 'value':
 				elm[attr] = attrs[attr];
 				break;
@@ -43,13 +44,13 @@ TW.prototype.getArtist = function(track) {
 };
 
 TW.prototype.sortAlpha = function(a, b, removeThe) {
-	var textA = a.toLowerCase();
-	var textB = b.toLowerCase();
+	a = a.toLowerCase();
+	b = b.toLowerCase();
 	if(removeThe) {
-		textA = textA.replace(/^the\s+/, '');
-		textB = textB.replace(/^the\s+/, '');
+		a = a.replace(/^the\s+/, '');
+		b = b.replace(/^the\s+/, '');
 	}
-	return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+	return (a < b) ? -1 : (a > b) ? 1 : 0;
 };
 
 TW.prototype.sortNum = function(a, b) {
@@ -62,29 +63,3 @@ TW.prototype.editStatus =
 ,	NOT_PLAYING:	2
 ,	DIFFERENT:		3
 };
-
-(function() {
-	var translation = null;
-	
-	function gettext(text) {
-		var translated = text;
-		if(translation !== null && text !== null && text in translation && translation[text] !== null)
-			translated = translation[text];
-		
-		if(arguments.length > 1) {
-			var aps = Array.prototype.slice;
-			var args = aps.call(arguments, 1);
-			a = arguments;
-			translated = translated.replace(/\{([^}]+)\}/g, function(_,match){return args[match];});
-		}
-		
-		return translated;
-	}
-
-	gettext.setTranslation = function(newTranslation) {
-		if(typeof newTranslation !== 'undefined')
-			translation = newTranslation;
-	};
-	
-	window._ = gettext;
-})();

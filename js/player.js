@@ -1,4 +1,4 @@
-function Player(player, Button, Throbber, editor) {
+function Player(player, Button, Throbber) {
 	var playing = {track: null, info: {}, loaded: false};
 	var container = TW.createTab('player');
 	
@@ -14,10 +14,10 @@ function Player(player, Button, Throbber, editor) {
 	btns.style.display = 'none';
 	var btnLegend = btns.appendChild(document.createElement('legend'));
 	var btnConfirm = Button.withLabel(_('Confirm'));
-	btnConfirm.node.addEventListener('click', function(){editor.confirm(playing.track, playing.info, function(info){loadInfo(info);TW.changeTab('player');});});
+	btnConfirm.node.addEventListener('click', function(){Editor.confirm(playing.track, playing.info, function(info){loadInfo(info);TW.changeTab('player');});});
 	btns.appendChild(btnConfirm.node);
 	var btnEdit = Button.withLabel();
-	btnEdit.node.addEventListener('click', function(){editor.edit(playing.track, playing.info, function(info){loadInfo(info);TW.changeTab('player');});});
+	btnEdit.node.addEventListener('click', function(){Editor.edit(playing.track, playing.info, function(info){loadInfo(info);TW.changeTab('player');});});
 	btns.appendChild(btnEdit.node);
 
 	player.load('track', 'position').done(changeTrack);
@@ -40,7 +40,7 @@ function Player(player, Button, Throbber, editor) {
 			
 			playing.track = player.track;
 			playing.info = {};
-			currentElm.innerText = _('Start playing a song to show any information registered to it');
+			currentElm.innerText = _('Start playing a song to show any information registered for it');
 			load();
 		} else if(playing.track !== player.track) {
 			playing.track = player.track;
@@ -69,7 +69,7 @@ function Player(player, Button, Throbber, editor) {
 			);
 			
 			playing.info = {};
-			currentElm.innerHTML = _('Currently playing:')+' '+TW.trackToString(playing.track);
+			currentElm.innerHTML = _('Currently playing: {0}', TW.trackToString(playing.track));
 			load();
 		}
 	}
@@ -84,11 +84,11 @@ function Player(player, Button, Throbber, editor) {
 			btns.style.display = playing.track !== null ? '' : 'none';
 			if(hasTrackInfo()) {
 				btnEdit.setLabel(_('Edit'));
-				btnLegend.innerText = _('Do you agree with the information registered to this track?');
+				btnLegend.innerText = _('Do you agree with the information registered for this track?');
 				btnConfirm.node.style.display = '';
 			} else {
 				btnEdit.setLabel(_('Register track information'));
-				btnLegend.innerText = _('No information has been registered to this track yet');
+				btnLegend.innerText = _('No information has been registered for this track yet');
 				btnConfirm.node.style.display = 'none';
 			}
 			dancegenres.load(playing.info.dancegenres || []);
@@ -111,7 +111,7 @@ function Player(player, Button, Throbber, editor) {
 	}
 	
 	function hasTrackInfo() {
-		return Object.keys(playing.info).length > (typeof playing.info.echoNest !== 'undefined' ? 2 : 1);
+		return Object.keys(playing.info).length > (playing.info.hasOwnProperty('echoNest') ? 2 : 1);
 	}
 	
 	function Poller(interval) {
@@ -136,8 +136,8 @@ function Player(player, Button, Throbber, editor) {
 		};
 		
 		function poll() {
-			// BUG: The position is not updated when playing after a playlist has been sorted!
-			// Reproduce: Start playing a playlist inside app. Sort the list. console.log(player.position) for each poll and observe that it does not change.
+			// BUG: The position is not updated if the playing track has been removed from the playlist, or tracks inserted before it
+			// Reproduce: Start playing a playlist inside TempoWiki. Call list.tracks.clear(). console.log(player.position) for each poll and observe that it does not change.
 			var pos = player.position;
 			var length = pos - prev;
 			
