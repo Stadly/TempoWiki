@@ -44,6 +44,7 @@ final class TempoWiki {
 			$ordering = array();
 			Properties::playlist($fields, $tables, $conditions, $ordering, User::get(), $_POST);
 
+			$playlist = array();
 			$db = Database::getInstance();
 			$sqlJoin = '';
 			for($i = 0 ; $i < count($tables); ++$i)
@@ -55,9 +56,13 @@ final class TempoWiki {
 			$select = $db->prepare("SELECT t.spotify track$sqlFields FROM ".Track::TABLE." t$sqlJoin$sqlWhere GROUP BY t.track ORDER BY $sqlOrdering LIMIT 0,200");
 
 			if($select->execute())
-				return $select->fetchAll(PDO::FETCH_ASSOC);
+				while($row = $select->fetch(PDO::FETCH_ASSOC)) {
+					$track['track'] = $row['track'];
+					$track['properties'] = Properties::managePlaylistRow($row);
+					$playlist[] = $track;
+				}
 		}
-		return array();
+		return $playlist;
 	}
 	
 	public static function register() {

@@ -1,15 +1,12 @@
 function Editor(player, Button, Throbber) {
-	var editing = {track: null, info: {}};
+	var editing = {track: null, metadata: {}};
 	var container = TW.createTab('editor');
 	var callback;
 	
 	var currentElm = container.appendChild(document.createElement('h2'));
 	var form = container.appendChild(document.createElement('form'));
 	var throbber = Throbber.forElement(form);
-	
-	var dancegenres = new Dancegenres.forEditor(form);
-	var musicgenres = new Musicgenres.forEditor(form);
-	var tempo = new Tempo.forEditor(form);
+	var properties = Properties.forEditor(form);
 
 	var btn;
 	var btns = form.appendChild(document.createElement('fieldset'));
@@ -28,16 +25,16 @@ function Editor(player, Button, Throbber) {
 	player.addEventListener('change:track', changeTrack);
 	player.addEventListener('change:playing', changeTrack);
 	
-	this.edit = function(track, info, func) {
+	this.edit = function(track, metadata, func) {
 		callback = func;
 		editing.track = track;
-		editing.info = info;
+		editing.metadata = metadata;
 		load();
 		TW.changeTab('editor');
 	};
 	
-	this.confirm = function(track, info, func) {
-		this.edit(track, info, func);
+	this.confirm = function(track, metadata, func) {
+		this.edit(track, metadata, func);
 		submit(track);
 	};
 	
@@ -55,13 +52,11 @@ function Editor(player, Button, Throbber) {
 		else
 			currentElm.innerText = _('No track is currently being edited');
 
-		tempo.changeTrack(status);
+		properties.changeTrack(status);
 	}
 	
 	function load() {
-		tempo.load(editing.info);
-		dancegenres.load(editing.info.dancegenres);
-		musicgenres.load(editing.info.musicgenres);
+		properties.load(editing.metadata);
 		changeTrack();
 		enable();
 	}
@@ -69,9 +64,7 @@ function Editor(player, Button, Throbber) {
 	function enable() {
 		btns.style.display = '';
 		throbber.hide();
-		tempo.enable();
-		dancegenres.enable();
-		musicgenres.enable();
+		properties.enable();
 	}
 	
 	function disable() {
@@ -79,9 +72,7 @@ function Editor(player, Button, Throbber) {
 		throbber.show();
 		throbber.showContent();
 		throbber.setSize('normal');
-		tempo.disable();
-		dancegenres.disable();
-		musicgenres.disable();
+		properties.disable();
 	}
 
 	function submit() {
@@ -89,25 +80,22 @@ function Editor(player, Button, Throbber) {
 		
 		var data = new FormData();
 		data.append('track', editing.track.uri);
-
-		tempo.submit(data);
-		dancegenres.submit(data);
-		musicgenres.submit(data);
+		properties.submit(data);
 
 		new AjaxRequest
 		(	SERVER+'register.php'
 		,	{	callback:
 				function() {
-					// Success registering info
-					var info = eval('('+this.responseText+');');
+					// Success registering metadata
+					var metadata = eval('('+this.responseText+');');
 					if(typeof callback === 'function')
-						callback(info);
+						callback(metadata);
 					enable();
 				}
 			,	error:
 				function() {
-					// Error registering info
-					console.log('Error registering info');
+					// Error registering metadata
+					console.log('Error registering metadata');
 					console.log(this);
 					enable();
 				}
@@ -118,7 +106,7 @@ function Editor(player, Button, Throbber) {
 
 	function cancel() {
 		editing.track = null;
-		editing.info = {};
+		editing.metadata = {};
 		load();
 		TW.changeTab('player');
 	}

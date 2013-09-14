@@ -1,4 +1,4 @@
-function Tempo(config, css, Button, Popup, Throbber) {
+function Tempo(config, css, Button, Throbber, Popup) {
 	var echoNestAPIKey = 'JWR4RIYPCFCNWPMGD';
 	var instances = [];
 	var rangeMin = parseInt(config.config.rangeMin);
@@ -51,13 +51,17 @@ function Tempo(config, css, Button, Popup, Throbber) {
 		function update() {
 			xhr = null;
 			throbber.hide();
-			tempoElm.innerText = Math.round(tempo * units.getMultiplier()) + ' ' + units.getUnit();
+			tempoElm.innerText = units.getValue(tempo) + ' ' + units.getUnit();
 		}
 	
 		this.changeProfile = function(config) {
 			if(xhr === null)
-				tempoElm.innerText = Math.round(tempo * units.getMultiplier()) + ' ' + units.getUnit();
+				tempoElm.innerText = units.getValue(tempo) + ' ' + units.getUnit();
 			container.style.display = config !== null && config.units.length > 0 ? '' : 'none';
+		};
+		
+		this.compareMetadata = function(metadata1, metadata2) {
+			return metadata1.tempo === metadata2.tempo || units.getProfile().length === 0;
 		};
 	};
 	
@@ -141,7 +145,7 @@ function Tempo(config, css, Button, Popup, Throbber) {
 					tempo += taps[center+i];
 				tempo = 60000 / (tempo/tapCount);
 			}
-			tempoElm.innerText = Math.round(tempo * units.getMultiplier()) + ' ' + units.getUnit();
+			tempoElm.innerText = units.getValue(tempo) + ' ' + units.getUnit();
 		}
 	
 		this.changeProfile = function(config) {
@@ -158,7 +162,7 @@ function Tempo(config, css, Button, Popup, Throbber) {
 		
 		var range = new Range(container, rangeMin, rangeMax, callback);
 		units.display(container, function(){range.update();updatePlaylist();});
-		sorting.tempo = [true, function(a,b,asc){numA = parseFloat(a.properties.tempo); numB = parseFloat(b.properties.tempo); return (numA === 0 || numB === 0) && asc ? numB-numA : numA-numB;}];
+		sorting.tempo = [true, function(a,b,asc){numA = parseFloat('properties' in a ? a.properties.tempo : 0); numB = parseFloat('properties' in b ? b.properties.tempo : 0); return (numA === 0 || numB === 0) && asc ? numB-numA : numA-numB;}];
 		
 		this.updateTrack = function(tempo) {
 			return tempo || 0;
@@ -174,7 +178,7 @@ function Tempo(config, css, Button, Popup, Throbber) {
 			for(var j = 0; j < columns.length; ++j)
 				for(var i = 0; i < playlist.model.items.length; ++i) {
 					var track = playlist.model.items[i];
-					playlist.view.rows[i].children[columns[j]].innerText = 'properties' in track && track.properties.tempo !== 0 ? Math.round(track.properties.tempo*units.getMultiplier()) : '';
+					playlist.view.rows[i].children[columns[j]].innerText = 'properties' in track && track.properties.tempo !== 0 ? units.getValue(track.properties.tempo) : '';
 				}
 		}
 	
@@ -192,6 +196,7 @@ function Tempo(config, css, Button, Popup, Throbber) {
 			if(resetMax)
 				reset.max = range.getRangeMax();
 			range.load(reset);
+			updatePlaylist();
 		};
 		
 		this.setPlaylist = function(list) {
@@ -202,8 +207,15 @@ function Tempo(config, css, Button, Popup, Throbber) {
 					css.removeClass(playlist.view.nodes.headerRow.children[i], 'undefined');
 					css.addClass(playlist.view.nodes.headerRow.children[i], 'sp-list-cell-tempo');
 					playlist.view.nodes.headerRow.children[i].childNodes[0].textContent = _('Tempo');
-					playlist.model.fields[i] = {id: 'tempo', title: _('Tempo'), className: 'sp-list-cell-tempo', fixedWidth: 59, neededProperties: {track: ['tempo']}, get: function(a){return 'properties' in a.track && a.track.properties.tempo !== 0 ? ''+Math.round(a.track.properties.tempo*units.getMultiplier()) : '';}};
+					playlist.model.fields[i] = {id: 'tempo', title: _('Tempo'), className: 'sp-list-cell-tempo', fixedWidth: 59, neededProperties: {track: ['tempo']}, get: function(a){return 'properties' in a.track && a.track.properties.tempo !== 0 ? ''+units.getValue(a.track.properties.tempo) : '';}};
 				}
+		};
+		
+		this.playlistName = function() {
+			var submit = range.submit();
+			if('min' in submit || 'max' in submit)
+				return units.getValue(submit.min || range.getMin()) + '-' + units.getValue(submit.max || range.getMax()) + units.getUnit();
+			return '';
 		};
 		
 		this.setPlaylist(playlist);
@@ -349,7 +361,7 @@ function Tempo(config, css, Button, Popup, Throbber) {
 			var value = 0;
 
 			this.update = function() {
-				elm.innerText = Math.round(value*units.getMultiplier());
+				elm.innerText = units.getValue(value);
 				var rangeInterval = rangeMax-rangeMin;
 				var rangePortion = rangeWidth/rangeInterval;
 				switch(type) {
@@ -386,7 +398,7 @@ function Tempo(config, css, Button, Popup, Throbber) {
 		
 		this.getId = function(){return current.getId();};
 		this.getUnit = function(){return current.getUnit();};
-		this.getMultiplier = function(){return current.getMultiplier();};
+		this.getValue = function(value){return Math.round(value*current.getMultiplier());};
 		
 		this.display = function(container, func, asButtons) {
 			if(typeof func === 'function')

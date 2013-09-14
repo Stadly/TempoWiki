@@ -51,12 +51,16 @@ final class Tempo implements IProperty {
 	public static function fetch($track, $user) {
 		require_once 'includes/Database.php';
 		
+		$accu = 0;
+		$reg = 0;
 		$db = Database::getInstance();
-		$select = $db->prepare('SELECT IFNULL(r.tempo, s.tempo) tempo FROM '.self::TABLE_ACCU.' s LEFT JOIN '.self::TABLE_REG.' r ON (s.track = r.track AND user = :user) WHERE s.track = :track ORDER BY votes, RAND() DESC LIMIT 0,1');
-		if($select->execute(array(':track' => $track, ':user' => $user)))
-			return $select->fetch(PDO::FETCH_COLUMN);
-		
-		return 0;
+		$select = $db->prepare('SELECT r.tempo reg, IFNULL(r.tempo, s.tempo) accu FROM '.self::TABLE_ACCU.' s LEFT JOIN '.self::TABLE_REG.' r ON (s.track = r.track AND user = :user) WHERE s.track = :track ORDER BY votes, RAND() DESC LIMIT 0,1');
+		 if($select->execute(array(':track' => $track, ':user' => $user))) {
+			$tempo = $select->fetch();
+			$accu = $tempo->accu;
+			$reg = $tempo->reg;
+		}
+		return array('accu' => array('tempo' => doubleval($accu)), 'reg' => array('tempo' => doubleval($reg)));
 	}
 	
 	public static function playlist(array &$fields, array &$tables, array &$conditions, array &$ordering, $user, array $data) {
@@ -77,16 +81,28 @@ final class Tempo implements IProperty {
 		$tables[] = array(self::TABLE_ACCU, $statConditions);
 		$tables[] = array(self::TABLE_REG, array(self::TABLE_REG.".user = $user"));
 	}
+	
+	public static function managePlaylistRow($row) {
+		return $row['tempo'] != NULL ? doubleval($row['tempo']) : NULL;
+	}
 
 	public static function profiles(array &$fields, array &$tables) {
-		$fields[] = 'GROUP_CONCAT(DISTINCT '.static::TABLE_PROFILER_UNIT.'.unit ORDER BY '.static::TABLE_PROFILER_UNIT.'.`default` DESC) units';
+		$fields[] = 'GROUP_CONCAT(DISTINCT '.static::TABLE_PROFILER_UNIT.'.unit ORDER BY '.static::TABLE_PROFILER_UNIT.'.`default` DESC) tempoUnits';
 		$tables[] = array(static::TABLE_PROFILER_UNIT, 'profile');
 		$fields[] = static::TABLE_PROFILER.'.min tempoMin';
 		$fields[] = static::TABLE_PROFILER.'.max tempoMax';
 		$tables[] = array(static::TABLE_PROFILER, 'profile');
 	}
 	
-	public static function profiler($profile, array $data) {
+	public static function manageProfile($row) {
+		$tempo = array();
+		$tempo['min'] = $row['tempoMin'] != NULL ? intval($row['tempoMin']) : NULL;
+		$tempo['max'] = $row['tempoMax'] != NULL ? intval($row['tempoMax']) : NULL;
+		$tempo['units'] = $row['tempoUnits'] != NULL ? array_map('intval', explode(',', $row['tempoUnits'])) : array();
+		return $tempo;
+	}
+	
+	public static function profilerEdit($profile, array $data) {
 		static::profilerDelete($profile);
 		
 		if(!empty($data)) {
@@ -114,22 +130,6 @@ final class Tempo implements IProperty {
 		$delete->execute(array(':profile' => $profile));
 		$deleteUnit = $db->prepare('DELETE FROM '.static::TABLE_PROFILER_UNIT.' WHERE profile = :profile');
 		$deleteUnit->execute(array(':profile' => $profile));
-	}
-	
-	public static function defaultUnit() {
-		if(isset($_POST['profile']) && isset($_POST['unit'])) {
-			require_once 'includes/Auth.php';
-
-			if(Auth::authenticated()) {
-				require_once 'includes/Database.php';
-
-				$db = Database::getInstance();
-				$reset = $db->prepare('UPDATE '.self::TABLE_PROFILER_UNIT.' SET `default` = 0 WHERE profile = :profile');
-				$reset->execute(array(':profile' => $_POST['profile']));
-				$update = $db->prepare('UPDATE '.self::TABLE_PROFILER_UNIT.' SET `default` = 1 WHERE profile = :profile AND unit = :unit');
-				$update->execute(array(':profile' => $_POST['profile'], ':unit' => $_POST['unit']));
-			}
-		}
 	}
 }
 

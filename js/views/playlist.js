@@ -1,7 +1,7 @@
-function Playlist(models, css, Throbber, List) {
+function Playlist(models, css, Button, Throbber, List) {
 	var container = TW.createTab('playlist');
 	var form = container.appendChild(document.createElement('form'));
-	var current, list, xhr, tempo, dancegenres, musicgenres;
+	var current, list, xhr, properties;
 	var playlists = [];
 	var sorting =
 	{	func:
@@ -104,7 +104,28 @@ function Playlist(models, css, Throbber, List) {
 		}
 	};
 	
+	var addPlaylistBtn = Button.withLabel('');
+	addPlaylistBtn.setIconClass('sp-icon-add');
+	css.addClass(addPlaylistBtn.node, 'add-playlist');
+	addPlaylistBtn.node.addEventListener('click', function() {
+		addPlaylistBtn.setLabel(_('Playlist added'));
+		addPlaylistBtn.setDisabled(true);
+		models.Playlist.create('TempoWiki ' + properties.playlistName()).done(function(playlist) {
+			playlist.load('tracks').done(function(){playlist.tracks.add(list.model.items);});
+		});
+	});
+
 	createPlaylist();
+	
+	function updateAddPlaylistBtn(playlistLength) {
+		if(playlistLength === 0)
+			addPlaylistBtn.node.style.display = 'none';
+		else {
+			addPlaylistBtn.setLabel(_('Add as Playlist'));
+			addPlaylistBtn.node.style.display = '';
+			addPlaylistBtn.setDisabled(false);
+		}
+	}
 
 	function createPlaylist(tracks) {
 		models.Playlist.createTemporary('playlist-'+playlists.length).done(function(playlist) {
@@ -135,14 +156,10 @@ function Playlist(models, css, Throbber, List) {
 		// Copy over data from track in tracks to track in playlist
 		
 		if(init) {
-			dancegenres = new Dancegenres.forPlaylist(list, form, update);
-			musicgenres = new Musicgenres.forPlaylist(list, form, update);
-			tempo = new Tempo.forPlaylist(list, sorting.func, form, update, css);
-		} else {
-			dancegenres.setPlaylist(list);
-			musicgenres.setPlaylist(list);
-			tempo.setPlaylist(list);
-		}
+			properties = Properties.forPlaylist(list, sorting.func, form, update);
+			form.appendChild(addPlaylistBtn.node);
+		} else
+			properties.setPlaylist(list);
 		
 		for(var i = 0; i < list.model.fields.length; ++i)
 			if(sorting.func.hasOwnProperty(list.model.fields[i].id)) {
@@ -150,6 +167,7 @@ function Playlist(models, css, Throbber, List) {
 				list.view.nodes.headerRow.children[i].addEventListener('click', (function(field){return function(){sorting.sort(field);};})(list.model.fields[i].id));
 			}
 
+		updateAddPlaylistBtn(typeof tracks === 'undefined' ? 0 : tracks.length);
 		container.appendChild(list.node);
 		list.init();
 		// Creating custom throbber, since the built-in one is reset during loading, and therefore changes appearance
@@ -163,9 +181,7 @@ function Playlist(models, css, Throbber, List) {
 		
 		var update = false;
 		var data = new FormData();
-		update |= tempo.submit(data);
-		update |= dancegenres.submit(data);
-		update |= musicgenres.submit(data);
+		update |= properties.submit(data);
 
 		if(update) {
 			list.throbber.show();
@@ -180,16 +196,14 @@ function Playlist(models, css, Throbber, List) {
 			,	{	callback:
 					function() {
 						// Success fetching playlist
-						var info = eval('('+this.responseText+');');
+						var metadata = eval('('+this.responseText+');');
 
 						// BUG: If hiding unplayable, sorting unplayable and keep current sorting when changing playlist had worked
 //						var tracks = [];
-//						for(var i = 0; i < info.length; ++i) {
-//							var track = models.Track.fromURI(info[i].track);
+//						for(var i = 0; i < metadata.length; ++i) {
+//							var track = models.Track.fromURI(metadata[i].track);
 //							track.order = i;
-//							tempo.updateTrack(track, info[i].tempo);
-//							dancegenres.updateTrack(track, info[i].dancegenres);
-//							musicgenres.updateTrack(track, info[i].musicgenres);
+//							properties.updateTrack(track, metadata[i]);
 //							tracks.push(track);
 //						}
 //						list.throbber.hide();
@@ -197,12 +211,10 @@ function Playlist(models, css, Throbber, List) {
 
 						// Solution to make hiding unplayable, sorting unplayable and keep current sorting when changing playlist work
 						var promises = [];
-						for(var i = 0; i < info.length; ++i) {
-							var track = models.Track.fromURI(info[i].track);
+						for(var i = 0; i < metadata.length; ++i) {
+							var track = models.Track.fromURI(metadata[i].track);
 							track.order = i;
-							tempo.updateTrack(track, info[i].tempo);
-							dancegenres.updateTrack(track, info[i].dancegenres);
-							musicgenres.updateTrack(track, info[i].musicgenres);
+							properties.updateTrack(track, metadata[i].properties);
 							promises.push(track.load('playable'));
 						}
 						var tracks = [];

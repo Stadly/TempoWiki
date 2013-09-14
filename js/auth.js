@@ -14,15 +14,15 @@
 		(	SERVER+'auth.php'
 		,	{	callback:
 				function() {
-					var info = eval('('+this.responseText+');');
+					var data = eval('('+this.responseText+');');
 					new AjaxRequest
-					(	SERVER+'auth.php?password='+getPassword(info.key)
+					(	SERVER+'auth.php?password='+getPassword(data.key)
 					,	{	callback:
 							function() {
-								var info = eval('('+this.responseText+');');
-								if(info.authenticated === true) {
+								var data = eval('('+this.responseText+');');
+								if(data.authenticated === true) {
 									authenticated = true;
-									success(info.config, info.profiles);
+									success(data.config, data.profiles);
 								} else
 									failure.call(this);
 							}

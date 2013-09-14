@@ -51,12 +51,17 @@ abstract class Genre implements IProperty {
 	public static function fetch($track, $user) {
 		require_once 'includes/Database.php';
 		
+		$accu = array();
+		$reg = array();
 		$db = Database::getInstance();
-		$select = $db->prepare('SELECT s.genre, IFNULL(value, votes/total) value FROM '.static::TABLE_ACCU.' s LEFT JOIN '.static::TABLE_REG.' r ON (s.track = r.track AND s.genre = r.genre AND r.user = :user) WHERE s.track = :track AND ROUND(IFNULL(value, votes/total)) != 0');
+		$select = $db->prepare('SELECT s.genre, value reg, IFNULL(value, votes/total) accu FROM '.static::TABLE_ACCU.' s LEFT JOIN '.static::TABLE_REG.' r ON (s.track = r.track AND s.genre = r.genre AND r.user = :user) WHERE s.track = :track AND ROUND(IFNULL(value, votes/total)) != 0');
 		if($select->execute(array(':track' => $track, ':user' => $user)))
-			return $select->fetchAll(PDO::FETCH_KEY_PAIR);
+			while($genre = $select->fetch()) {
+				$accu[$genre->genre] = doubleval($genre->accu);
+				$reg[$genre->genre] = doubleval($genre->reg);
+			}
 		
-		return array();
+		return array('accu' => $accu, 'reg' => $reg);
 	}
 	
 	public static function playlist(array &$fields, array &$tables, array &$conditions, array &$ordering, $user, array $data) {
@@ -77,12 +82,20 @@ abstract class Genre implements IProperty {
 		$ordering[] = 'SUM('.static::TABLE_ACCU_USER.'.value)';
 	}
 	
+	public static function managePlaylistRow($row) {
+		return $row[static::FIELD_PREFIX.'genres'] != NULL ? array_map('intval', explode(',', $row[static::FIELD_PREFIX.'genres'])) : array();
+	}
+	
 	public static function profiles(array &$fields, array &$tables) {
 		$fields[] = 'GROUP_CONCAT(DISTINCT '.static::TABLE_PROFILER.'.genre) '.static::FIELD_PREFIX.'genres';
 		$tables[] = array(static::TABLE_PROFILER, 'profile');
 	}
 	
-	public static function profiler($profile, array $data) {
+	public static function manageProfile($row) {
+		return $row[static::FIELD_PREFIX.'genres'] != NULL ? array_map('intval', explode(',', $row[static::FIELD_PREFIX.'genres'])) : array();
+	}
+	
+	public static function profilerEdit($profile, array $data) {
 		static::profilerDelete($profile);
 		
 		require_once 'includes/Database.php';

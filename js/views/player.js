@@ -1,27 +1,30 @@
 function Player(player, Button, Throbber) {
-	var playing = {track: null, info: {}, loaded: false};
+	var self = this;
+	var playing = {track: null, metadata: {}, loaded: false};
 	var container = TW.createTab('player');
 	
 	var currentElm = container.appendChild(document.createElement('h2'));
 	var form = container.appendChild(document.createElement('form'));
 	var throbber = Throbber.forElement(form);
-
-	var dancegenres = new Dancegenres.forPlayer(form);
-	var musicgenres = new Musicgenres.forPlayer(form);
-	var tempo = new Tempo.forPlayer(form);
+	var properties = Properties.forPlayer(form);
+	var metadataExists = false;
 
 	var btns = form.appendChild(document.createElement('fieldset'));
 	btns.style.display = 'none';
 	var btnLegend = btns.appendChild(document.createElement('legend'));
 	var btnConfirm = Button.withLabel(_('Confirm'));
-	btnConfirm.node.addEventListener('click', function(){Editor.confirm(playing.track, playing.info, function(info){loadInfo(info);TW.changeTab('player');});});
+	btnConfirm.node.addEventListener('click', function(){Editor.confirm(playing.track, playing.metadata.accu, function(metadata){loadMetadata(metadata);TW.changeTab('player');});});
 	btns.appendChild(btnConfirm.node);
 	var btnEdit = Button.withLabel();
-	btnEdit.node.addEventListener('click', function(){Editor.edit(playing.track, playing.info, function(info){loadInfo(info);TW.changeTab('player');});});
+	btnEdit.node.addEventListener('click', function(){Editor.edit(playing.track, playing.metadata.accu, function(metadata){loadMetadata(metadata);TW.changeTab('player');});});
 	btns.appendChild(btnEdit.node);
 
 	player.load('track', 'position').done(changeTrack);
 	player.addEventListener('change:track', changeTrack);
+	
+	this.getTrack = function() {
+		return playing.track === null ? null : playing.track.uri;
+	};
 
 	var xhr, poller;
 	function changeTrack() {
@@ -33,13 +36,13 @@ function Player(player, Button, Throbber) {
 		if(player.track === null) {
 			if(playing.track !== null) {
 				var data = new FormData();
-				data.append('prev', JSON.stringify({track: playing.info.track, played: poller.changeTrack()}));
+				data.append('prev', JSON.stringify({track: playing.metadata.track, played: poller.changeTrack()}));
 				new AjaxRequest(SERVER+'fetch.php', {}, data);
 				poller.stop();
 			}
 			
 			playing.track = player.track;
-			playing.info = {};
+			playing.metadata = {};
 			currentElm.innerText = _('Start playing a song to show any information registered for it');
 			load();
 		} else if(playing.track !== player.track) {
@@ -47,71 +50,70 @@ function Player(player, Button, Throbber) {
 			
 			var data = new FormData();
 			data.append('track', player.track.uri);
-			data.append('prev', JSON.stringify({track: playing.info.track, played: poller.changeTrack()}));
+			data.append('prev', JSON.stringify({track: playing.metadata.track, played: poller.changeTrack()}));
 			if(typeof xhr !== 'undefined')
 				xhr.abort();
 			xhr = new AjaxRequest
 			(	SERVER+'fetch.php'
 			,	{	callback:
 					function() {
-						// Success fetching info
-						var info = eval('('+this.responseText+');');
-						loadInfo(info);
+						// Success fetching metadata
+						var metadata = eval('('+this.responseText+');');
+						loadMetadata(metadata);
 					}
 				,	error:
 					function() {
-						// Error fetching info
-						console.log('Error fetching info');
+						// Error fetching metadata
+						console.log('Error fetching metadata');
 						console.log(this);
 					}
 				}
 			,	data
 			);
 			
-			playing.info = {};
+			playing.metadata = {};
 			currentElm.innerHTML = _('Currently playing: {0}', TW.trackToString(playing.track));
 			load();
 		}
 	}
+	
+	this.displayButtons = function() {
+		if(metadataExists) {
+			btnEdit.setLabel(_('Edit'));
+			btnLegend.innerText = _('Do you agree with the information registered for this track?');
+			btnConfirm.node.style.display = properties.compareMetadata(playing.metadata.accu, playing.metadata.reg) ? 'none' : '';
+		} else {
+			btnEdit.setLabel(_('Register track information'));
+			btnLegend.innerText = _('No information has been registered for this track yet');
+			btnConfirm.node.style.display = 'none';
+		}
+	};
 
 	function load() {
-		if(!infoLoaded() && playing.track !== null) {
+		if(!metadataLoaded() && playing.track !== null) {
 			btns.style.display = 'none';
 			throbber.show();
 			throbber.showContent();
 			throbber.setSize('normal');
 		} else {
 			btns.style.display = playing.track !== null ? '' : 'none';
-			if(hasTrackInfo()) {
-				btnEdit.setLabel(_('Edit'));
-				btnLegend.innerText = _('Do you agree with the information registered for this track?');
-				btnConfirm.node.style.display = '';
-			} else {
-				btnEdit.setLabel(_('Register track information'));
-				btnLegend.innerText = _('No information has been registered for this track yet');
-				btnConfirm.node.style.display = 'none';
-			}
-			dancegenres.load(playing.info.dancegenres || []);
-			musicgenres.load(playing.info.musicgenres || []);
-			tempo.load(playing.info);
+			self.displayButtons();
+			properties.load(playing.metadata.accu || {});
 			throbber.hide();
 		}
 	}
 	
-	function loadInfo(info) {
-		if(infoLoaded(info)) {
-			playing.info = info;
+	function loadMetadata(metadata) {
+		if(metadataLoaded(metadata)) {
+			playing.metadata = metadata;
+			metadataExists = 'accu' in playing.metadata && Object.keys(playing.metadata.accu).length > 0;
 			load();
 		}
 	}
 	
-	function infoLoaded(info) {
-		info = info || playing.info;
-		return playing.track !== null && playing.track.uri === info.track;
-	}
-	
-	function hasTrackInfo() {
-		return Object.keys(playing.info).length > (playing.info.hasOwnProperty('echoNest') ? 2 : 1);
+	function metadataLoaded(metadata) {
+		metadata = metadata || playing.metadata;
+		return playing.track !== null && playing.track.uri === metadata.track;
 	}
 	
 	function Poller(interval) {

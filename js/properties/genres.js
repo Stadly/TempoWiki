@@ -93,7 +93,7 @@ function Genres(config, css, Button) {
 			var exclude = [];
 			var include = [];
 			for(var id in genres)
-				if(genres[id].active && config.indexOf(id) !== -1) {
+				if(genres[id].active && config.indexOf(parseInt(id)) !== -1) {
 					include.push(id);
 					if(exclude.indexOf(genres[id].genre.getParent()+'') === -1)
 						exclude.push(genres[id].genre.getParent()+'');
@@ -105,20 +105,40 @@ function Genres(config, css, Button) {
 				if(exclude.indexOf(include[i]) === -1)
 					short.push(genres[include[i]].genre.getShort());
 			}
-			return {name: name.join(', '), short: short.join(', ')};
+			return {name: name.join(', '), short: short.join(', '), config: config};
 		};
 
 		this.changeProfile = function(config) {
-			container.style.display = (config === null || config.length > 0) ? '' : 'none';
+			container.style.display = config !== null && config.length > 0 ? '' : 'none';
 			var changed = false;
 			for(var id in genres) {
-				var show = config === null || config.indexOf(id) !== -1;
+				var show = config !== null && config.indexOf(parseInt(id)) !== -1;
 				changed |= show !== genres[id].active && genres[id].state !== 0;
 				genres[id].button.node.style.display = show ? '' : 'none';
 				genres[id].active = show;
 			}
 			if(changed && typeof callback === 'function')
 				callback();
+		};
+		
+		this.compareMetadata = function(metadata1, metadata2) {
+			for(var id in genres) {
+				if(genres[id].active && metadata1[id] !== metadata2[id])
+					return false;
+			}
+			return true;
+		};
+		
+		this.playlistName = function() {
+			var selection = self.getSelection();
+			var name = [];
+			for(var id in selection) {
+				if(selection[id] === 1)
+					name.push(genres[id].genre.getShort());
+				else if(selection[id] === -1)
+					name.push('-'+genres[id].genre.getShort());
+			}
+			return name.join(',');
 		};
 	};
 

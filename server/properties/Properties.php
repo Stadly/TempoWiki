@@ -29,13 +29,15 @@ final class Properties implements IProperty {
 
 	public static function fetch($track, $user) {
 		$trackId = Track::get($track);
-		$fetch = array('track' => $track);
+		$fetch = array('track' => $track, 'accu' => array(), 'reg' => array());
 		if($trackId != 0) {
 			self::loadProperties();
 			foreach(self::$properties as $name => $property) {
 				$propFetch = $property[1]::fetch($trackId, $user);
-				if(!empty($propFetch))
-					$fetch[$name] = $propFetch;
+				if(!empty($propFetch['accu']))
+					$fetch['accu'][$name] = $propFetch['accu'];
+				if(!empty($propFetch['reg']))
+					$fetch['reg'][$name] = $propFetch['reg'];
 			}
 		}
 		return $fetch;
@@ -49,16 +51,26 @@ final class Properties implements IProperty {
 
 	public static function register($track, $user, array $data, $date) {
 		$trackId = Track::register($track);
-		$register = array('track' => $track);
+		$register = array('track' => $track, 'accu' => array(), 'reg' => array());
 		if($trackId != 0) {
 			self::loadProperties();
 			foreach(self::$properties as $name => $property) {
 				$propRegister = $property[1]::register($trackId, $user, empty($data[$name]) ? array() : json_decode($data[$name], TRUE), $date);
-				if(!empty($propRegister))
-					$register[$name] = $propRegister;
+				if(!empty($propRegister['accu']))
+					$register['accu'][$name] = $propRegister['accu'];
+				if(!empty($propRegister['reg']))
+					$register['reg'][$name] = $propRegister['reg'];
 			}
 		}
 		return $register;
+	}
+	
+	public static function managePlaylistRow($row) {
+		$properties = array();
+		self::loadProperties();
+		foreach(self::$properties as $name => $property)
+			$properties[$name] = $property[1]::managePlaylistRow($row);
+		return $properties;
 	}
 	
 	public static function profiles(array &$fields, array &$tables) {
@@ -67,10 +79,18 @@ final class Properties implements IProperty {
 			$property[1]::profiles($fields, $tables);
 	}
 	
-	public static function profiler($profile, array $data) {
+	public static function manageProfile($row) {
+		$properties = array();
 		self::loadProperties();
 		foreach(self::$properties as $name => $property)
-			$property[1]::profiler($profile, empty($data[$name]) ? array() : json_decode($data[$name], TRUE));
+			$properties[$name] = $property[1]::manageProfile($row);
+		return $properties;
+	}
+	
+	public static function profilerEdit($profile, array $data) {
+		self::loadProperties();
+		foreach(self::$properties as $name => $property)
+			$property[1]::profilerEdit($profile, empty($data[$name]) ? array() : json_decode($data[$name], TRUE));
 	}
 	
 	public static function profilerDelete($profile) {

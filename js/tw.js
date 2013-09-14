@@ -33,13 +33,17 @@ TW.prototype.createElement = function(type, attrs) {
 };
 
 TW.prototype.trackToString = function(track) {
-	return '<span class="artist">'+TW.getArtist(track)+'</span> - <span class="title">'+track.name.decodeForText()+'</span>';
+	return '<span class="artist">'+TW.getArtist(track, true)+'</span> - <span class="title">'+track.name.decodeForHtml()+'</span>';
 };
 
-TW.prototype.getArtist = function(track) {
+TW.prototype.getArtist = function(track, asLink) {
 	var artists = [];
-	for(var i = 0; i < track.artists.length; ++i)
-		artists.push(track.artists[i].name.decodeForText());
+	for(var i = 0; i < track.artists.length; ++i) {
+		var artist = track.artists[i].name.decodeForHtml();
+		if(asLink)
+			artist = '<a href="'+track.artists[i].uri+'">'+artist+'</a>';
+		artists.push(artist);
+	}
 	return artists.join(', ');
 };
 

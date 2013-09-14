@@ -1,8 +1,7 @@
 function Profiler(profiles, css, TabBar) {
 	var btnNew, xhrActive;
-	var active = false;
+	var active = -1;
 	var xhrRegister = [];
-	var xhrDefaultUnit = [];
 	
 	var tabBar = TabBar.withTabs([], {sticky: false});
 	tabBar.addToDom(document.getElementById('header'), 'after');
@@ -11,63 +10,22 @@ function Profiler(profiles, css, TabBar) {
 
 	var container = TW.createTab('profiler');
 	var form = container.appendChild(document.createElement('form'));
-	var dancegenres = new Dancegenres.forProfiler(form, submit);
-	var musicgenres = new Musicgenres.forProfiler(form, submit);
-	var tempo = new Tempo.forProfiler(form, submit, function(unit) {
-		if(active !== false && profiles[active].profile !== 0) {
-			var id = active;
-			if(typeof xhrDefaultUnit[id] !== 'undefined')
-				xhrDefaultUnit[id].abort();
-
-			var data = new FormData();
-			data.append('profile', profiles[id].profile);
-			data.append('unit', unit);
-			profiles[id].tempo = tempo.getProfile();
-
-			xhrDefaultUnit[id] = new AjaxRequest
-			(	SERVER+'profiler/default-unit.php'
-			,	{	callback:
-					function() {
-						// Success registering default unit
-						delete xhrDefaultUnit[id];
-					}
-				,	error:
-					function() {
-						// Error registering default unit
-						delete xhrRegister[id];
-						console.log('Error registering default unit');
-						console.log(this);
-					}
-				}
-			,	data
-			);
-		}
-	});
+	var properties = new Properties.forProfiler(form, submit);
 	
-	for(var i = 0; i < profiles.length; ++i) {
-		profiles[i].dancegenres = profiles[i].dancegenres === null ? [] : profiles[i].dancegenres.split(',');
-		profiles[i].musicgenres = profiles[i].musicgenres === null ? [] : profiles[i].musicgenres.split(',');
-		profiles[i].tempo =
-			{	min: profiles[i].tempoMin
-			,	max: profiles[i].tempoMax
-			,	units: profiles[i].units === null ? [] : profiles[i].units.split(',').map(Number)
-			};
-		profiles[i].active = profiles[i].active === '1';
-		active |= profiles[i].active;
+	for(var i = 0; i < profiles.length; ++i)
 		displayProfile(i);
-	}
 	if(profiles.length === 0) {
 		newProfile();
 		tabBar.contentNode.removeChild(input);
-	} else if(!active)
+	} else if(active === -1)
 		tabBar.setActiveTab('0');
 	
 	function changeProfile(e) {
+		var prev = active;
 		active = e.id;
-		Tempo.changeProfile(profiles[active].tempo || null);
-		Dancegenres.changeProfile(profiles[active].dancegenres || null);
-		Musicgenres.changeProfile(profiles[active].musicgenres || null);
-		if(profiles[active].profile !== 0) {
+		Properties.changeProfile(profiles[active]);
+		Player.displayButtons();
+		if(profiles[active].profile !== 0 && prev !== active) {
 			if(typeof xhrActive !== 'undefined')
 				xhrActive.abort();
 			
@@ -80,12 +38,16 @@ function Profiler(profiles, css, TabBar) {
 					function() {
 						delete xhrActive;
 						// Success registering active profile
+						if(this.responseText !== '') {
+							console.log('Error registering active profile');
+							console.log(this);
+						}
 					}
 				,	error:
 					function() {
 						// Error registering active profile
 						delete xhrActive;
-						console.log('Error registering default unit');
+						console.log('Error registering active profile');
 						console.log(this);
 					}
 				}
@@ -95,7 +57,7 @@ function Profiler(profiles, css, TabBar) {
 	}
 	
 	function displayProfile(profile) {
-		tabBar.addTab({id: profile, name: profiles[profile].name});
+		tabBar.addTab({id: ''+profile, name: profiles[profile].name});
 		profiles[profile].button = tabBar.contentNode.lastChild;
 		if(profiles[profile].active)
 			tabBar.setActiveTab(''+profile);
@@ -105,6 +67,7 @@ function Profiler(profiles, css, TabBar) {
 		if(typeof btnNew !== 'undefined')
 			tabBar.contentNode.removeChild(btnNew);
 			
+//		Alternative: Use classes sp-button-icon sp-icon-add
 		btnNew = tabBar.contentNode.appendChild(TW.createElement('span', {className: 'admin-icon profile-new'}));
 		btnNew.addEventListener('click', newProfile);
 	}
@@ -112,31 +75,31 @@ function Profiler(profiles, css, TabBar) {
 	function submit() {
 		if(active !== false && profiles[active].profile !== 0) {
 			var id = active;
-			if(typeof xhrRegister[id] !== 'undefined')
+			if(id in xhrRegister)
 				xhrRegister[id].abort();
 
 			var data = new FormData();
 			data.append('profile', profiles[id].profile);
-			tempo.submit(data);
-			profiles[id].tempo = tempo.getProfile();
-			dancegenres.submit(data);
-			profiles[id].dancegenres = dancegenres.getProfile();
-			musicgenres.submit(data);
-			profiles[id].musicgenres = musicgenres.getProfile();
+			properties.submit(data);
+			properties.getProfile(profiles[id].properties);
 			changeProfile({id: id});
 
 			xhrRegister[id] = new AjaxRequest
-			(	SERVER+'profiler/register.php'
+			(	SERVER+'profiler/edit.php'
 			,	{	callback:
 					function() {
-						// Success registering profile
+						// Success editing profile
+						if(this.responseText !== '') {
+							console.log('Error editing profile');
+							console.log(this);
+						}
 						delete xhrRegister[id];
 					}
 				,	error:
 					function() {
-						// Error registering profile
+						// Error editing profile
 						delete xhrRegister[id];
-						console.log('Error registering profile');
+						console.log('Error editing profile');
 						console.log(this);
 					}
 				}
@@ -151,9 +114,7 @@ function Profiler(profiles, css, TabBar) {
 			{	profile:		0
 			,	name:			_('New profile')
 			,	active:		true
-			,	dancegenres:	[]
-			,	musicgenres:	[]
-			,	tempo:			{}
+			,	properties:	{}
 			};
 		displayProfile(id);
 		renameProfile();
@@ -165,6 +126,10 @@ function Profiler(profiles, css, TabBar) {
 		,	{	callback:
 				function() {
 					// Success creating profile
+					if(isNaN(this.responseText)) {
+						console.log('Error creating profile');
+						console.log(this);
+					}
 					profiles[id].profile = this.responseText;
 				}
 			,	error:
@@ -197,7 +162,7 @@ function Profiler(profiles, css, TabBar) {
 		input.addEventListener('keyup', updateButton);
 		input.addEventListener('blur', function() {
 			if(profiles[id].profile !== 0) {
-				if(typeof xhrRename[id] !== 'undefined')
+				if(id in xhrRename)
 					xhrRename[id].abort();
 
 				tabBar.contentNode.removeChild(input);
@@ -210,6 +175,10 @@ function Profiler(profiles, css, TabBar) {
 				,	{	callback:
 						function() {
 							// Success renaming profile
+							if(this.responseText !== '') {
+								console.log('Error renaming profile');
+								console.log(this);
+							}
 							delete xhrRename[id];
 						}
 					,	error:
