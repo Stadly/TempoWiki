@@ -29,8 +29,9 @@ function Musicgenres(config, css, Button, Throbber, Popup) {
 		};
 	};
 	
-	this.forPlaylist = function(playlist, func, parent, callback) {
+	this.forPlaylist = function(sorting, parent, callback) {
 		instances.push(this);
+		var playlist = null;
 		var columns = [];
 		var popups = {};
 		var container = parent.appendChild(document.createElement('fieldset'));
@@ -41,18 +42,19 @@ function Musicgenres(config, css, Button, Throbber, Popup) {
 		this.changeProfile = function(config) {
 			// TODO: Remove musicgenre-column from playlist if musicgenres should not be shown
 			instance.changeProfile(config);
-			for(var i = 0; i < playlist.model.items.length; ++i) {
-				var track = playlist.model.items[i];
-				if('properties' in track) {
-					track.properties.musicgenres = this.updateTrack(track.properties.musicgenres.config);
-					for(var j = 0; j < columns.length; ++j) {
-						var parent = playlist.view.rows[i].children[columns[j]];
-						while(parent.firstChild)
-							 parent.removeChild(parent.firstChild);
-						parent.appendChild(playlistCell('properties' in track ? track.properties.musicgenres : null));
+			if(playlist !== null)
+				for(var i = 0; i < playlist.model.items.length; ++i) {
+					var track = playlist.model.items[i];
+					if('properties' in track) {
+						track.properties.musicgenres = this.updateTrack(track.properties.musicgenres.config);
+						for(var j = 0; j < columns.length; ++j) {
+							var parent = playlist.view.rows[i].children[columns[j]];
+							while(parent.firstChild)
+								 parent.removeChild(parent.firstChild);
+							parent.appendChild(playlistCell('properties' in track ? track.properties.musicgenres : null));
+						}
 					}
 				}
-			}
 		};
 		
 		function playlistCell(config) {
@@ -66,15 +68,16 @@ function Musicgenres(config, css, Button, Throbber, Popup) {
 		
 		this.setPlaylist = function(list) {
 			playlist = list;
-			for(var i = 0; i < playlist.model.fields.length; ++i)
-				if(playlist.model.fields[i].id === 'musicgenre') {
-					columns.push(i);
-					css.removeClass(playlist.view.nodes.headerRow.children[i], 'undefined');
-					css.addClass(playlist.view.nodes.headerRow.children[i], 'sp-list-cell-musicgenre');
-					playlist.view.nodes.headerRow.children[i].childNodes[0].textContent = _('Music genres');
-					// When a track is replaced by an other track (for example when a track is not available in a region), config is undefined on that track
-					playlist.model.fields[i] = {id: 'musicgenre', title: _('Music genres'), className: 'sp-list-cell-musicgenre', fixedWidth: 92, neededProperties: {track: ['musicgenres']}, get: function(a){return playlistCell('properties' in a.track ? a.track.properties.musicgenres : null);}};
-				}
+			if(playlist !== null)
+				for(var i = 0; i < playlist.model.fields.length; ++i)
+					if(playlist.model.fields[i].id === 'musicgenre') {
+						columns.push(i);
+						css.removeClass(playlist.view.nodes.headerRow.children[i], 'undefined');
+						css.addClass(playlist.view.nodes.headerRow.children[i], 'sp-list-cell-musicgenre');
+						playlist.view.nodes.headerRow.children[i].childNodes[0].textContent = _('Music genres');
+						// When a track is replaced by an other track (for example when a track is not available in a region), config is undefined on that track
+						playlist.model.fields[i] = {id: 'musicgenre', title: _('Music genres'), className: 'sp-list-cell-musicgenre', fixedWidth: 92, neededProperties: {track: ['musicgenres']}, get: function(a){return playlistCell('properties' in a.track ? a.track.properties.musicgenres : null);}};
+					}
 		};
 		
 		this.submit = function(data) {
@@ -97,8 +100,6 @@ function Musicgenres(config, css, Button, Throbber, Popup) {
 		};
 		
 		this.playlistName = instance.playlistName;
-		
-		this.setPlaylist(playlist);
 	};
 	
 	this.forProfiler = function(parent, callback) {

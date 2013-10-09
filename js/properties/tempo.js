@@ -153,8 +153,9 @@ function Tempo(config, css, Button, Throbber, Popup) {
 		};
 	};
 	
-	this.forPlaylist = function(playlist, sorting, parent, callback) {
+	this.forPlaylist = function(sorting, parent, callback) {
 		instances.push(this);
+		var playlist = null;
 		var columns = [];
 
 		var container = parent.appendChild(document.createElement('fieldset'));
@@ -201,14 +202,15 @@ function Tempo(config, css, Button, Throbber, Popup) {
 		
 		this.setPlaylist = function(list) {
 			playlist = list;
-			for(var i = 0; i < playlist.model.fields.length; ++i)
-				if(playlist.model.fields[i].id === 'tempo') {
-					columns.push(i);
-					css.removeClass(playlist.view.nodes.headerRow.children[i], 'undefined');
-					css.addClass(playlist.view.nodes.headerRow.children[i], 'sp-list-cell-tempo');
-					playlist.view.nodes.headerRow.children[i].childNodes[0].textContent = _('Tempo');
-					playlist.model.fields[i] = {id: 'tempo', title: _('Tempo'), className: 'sp-list-cell-tempo', fixedWidth: 59, neededProperties: {track: ['tempo']}, get: function(a){return 'properties' in a.track && a.track.properties.tempo !== 0 ? ''+units.getValue(a.track.properties.tempo) : '';}};
-				}
+			if(playlist !== null)
+				for(var i = 0; i < playlist.model.fields.length; ++i)
+					if(playlist.model.fields[i].id === 'tempo') {
+						columns.push(i);
+						css.removeClass(playlist.view.nodes.headerRow.children[i], 'undefined');
+						css.addClass(playlist.view.nodes.headerRow.children[i], 'sp-list-cell-tempo');
+						playlist.view.nodes.headerRow.children[i].childNodes[0].textContent = _('Tempo');
+						playlist.model.fields[i] = {id: 'tempo', title: _('Tempo'), className: 'sp-list-cell-tempo', fixedWidth: 59, neededProperties: {track: ['tempo']}, get: function(a){return 'properties' in a.track && a.track.properties.tempo !== 0 ? ''+units.getValue(a.track.properties.tempo) : '';}};
+					}
 		};
 		
 		this.playlistName = function() {
@@ -217,8 +219,6 @@ function Tempo(config, css, Button, Throbber, Popup) {
 				return units.getValue(submit.min || range.getMin()) + '-' + units.getValue(submit.max || range.getMax()) + units.getUnit();
 			return '';
 		};
-		
-		this.setPlaylist(playlist);
 	};
 	
 	this.forProfiler = function(parent, callback) {

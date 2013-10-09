@@ -6,7 +6,9 @@ function TW(application) {
 }
 
 TW.prototype.createTab = function(name) {
-	return document.getElementById('wrapper').appendChild(TW.createElement('div', {id: 'tab-'+name, className: 'tab'}));
+	var tab = document.getElementById('wrapper').appendChild(TW.createElement('div', {id: 'tab-'+name, className: 'tab'}));
+	tab.style.display = 'none';
+	return tab;
 };
 
 TW.prototype.createElement = function(type, attrs) {

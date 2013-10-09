@@ -28,11 +28,11 @@
 		return forEditor;
 	};
 	
-	Properties.forPlaylist = function(list, func, form, update) {
+	Properties.forPlaylist = function(sorting, form, update) {
 		var forPlaylist = new PropertyCollection();
 		for(var property in properties)
 			if(properties.hasOwnProperty(property))
-				forPlaylist.addProperty(property, new properties[property].forPlaylist(list, func, form, update));
+				forPlaylist.addProperty(property, new properties[property].forPlaylist(sorting, form, update));
 		return forPlaylist;
 	};
 	

@@ -19,7 +19,7 @@ var SERVER = 'http://www.myrtveitfoto.no/tempowiki/';	// Online server
 					Editor = new Editor(models.player, Button, Throbber);
 					Player = new Player(models.player, Button, Throbber);
 					new Playlist(models, css, Button, Throbber, List);
-					var profiler = new Profiler(profiles, css, TabBar);
+					Profiler = new Profiler(profiles, css, TabBar);
 
 					models.application.load('arguments').done(tabs);
 					models.application.addEventListener('arguments', tabs);
@@ -33,7 +33,7 @@ var SERVER = 'http://www.myrtveitfoto.no/tempowiki/';	// Online server
 						if(current)
 							current.style.display = '';
 
-						profiler.changeTab(models.application.arguments[0]);
+						Profiler.changeTab(models.application.arguments[0]);
 					}
 				}
 			,	function() {

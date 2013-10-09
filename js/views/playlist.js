@@ -1,7 +1,7 @@
 function Playlist(models, css, Button, Throbber, List) {
 	var container = TW.createTab('playlist');
 	var form = container.appendChild(document.createElement('form'));
-	var current, list, xhr, properties;
+	var current, list, xhr;
 	var playlists = [];
 	var sorting =
 	{	func:
@@ -91,16 +91,17 @@ function Playlist(models, css, Button, Throbber, List) {
 //				});
 //			}
 			
-			for(var i = 0; i < list.model.fields.length; ++i) {
-				var cell = list.view.nodes.headerRow.children[i];
-				css.removeClass(cell, 'sp-list-heading-sorted');
-				css.removeClass(cell, 'sp-list-heading-sorted-asc');
-				css.removeClass(cell, 'sp-list-heading-sorted-desc');
-				if(this.current.length > 0 && list.model.fields[i].id === this.current[0][0]) {
-					css.addClass(cell, 'sp-list-heading-sorted');
-					css.addClass(cell, this.current[0][1] ? 'sp-list-heading-sorted-asc' : 'sp-list-heading-sorted-desc');
+			if(typeof list !== 'undefined')
+				for(var i = 0; i < list.model.fields.length; ++i) {
+					var cell = list.view.nodes.headerRow.children[i];
+					css.removeClass(cell, 'sp-list-heading-sorted');
+					css.removeClass(cell, 'sp-list-heading-sorted-asc');
+					css.removeClass(cell, 'sp-list-heading-sorted-desc');
+					if(this.current.length > 0 && list.model.fields[i].id === this.current[0][0]) {
+						css.addClass(cell, 'sp-list-heading-sorted');
+						css.addClass(cell, this.current[0][1] ? 'sp-list-heading-sorted-asc' : 'sp-list-heading-sorted-desc');
+					}
 				}
-			}
 		}
 	};
 	
@@ -115,6 +116,9 @@ function Playlist(models, css, Button, Throbber, List) {
 		});
 	});
 
+	var properties = Properties.forPlaylist(sorting.func, form, update);
+	form.appendChild(addPlaylistBtn.node);
+	
 	createPlaylist();
 	
 	function updateAddPlaylistBtn(playlistLength) {
@@ -144,8 +148,7 @@ function Playlist(models, css, Button, Throbber, List) {
 	}
 	
 	function createList(playlist, tracks) {
-		var init = typeof list === 'undefined';
-		if(!init)
+		if(typeof list !== 'undefined')
 			container.removeChild(list.node);
 			
 		// BUG: Hiding unplayable does not seem to be working
@@ -155,11 +158,7 @@ function Playlist(models, css, Button, Throbber, List) {
 		// Create database over tracks that should be combined
 		// Copy over data from track in tracks to track in playlist
 		
-		if(init) {
-			properties = Properties.forPlaylist(list, sorting.func, form, update);
-			form.appendChild(addPlaylistBtn.node);
-		} else
-			properties.setPlaylist(list);
+		properties.setPlaylist(list);
 		
 		for(var i = 0; i < list.model.fields.length; ++i)
 			if(sorting.func.hasOwnProperty(list.model.fields[i].id)) {
