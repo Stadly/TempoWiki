@@ -1,8 +1,7 @@
 function Playlist(models, css, Button, Throbber, List) {
 	var container = TW.createTab('playlist');
 	var form = container.appendChild(document.createElement('form'));
-	var current, list, xhr;
-	var playlists = [];
+	var playlist, list, xhr;
 	var sorting =
 	{	func:
 		{	order:		[true,	function(a,b){return TW.sortNum(a.order, b.order);}]
@@ -10,7 +9,8 @@ function Playlist(models, css, Button, Throbber, List) {
 		,	popularity:	[false,	function(a,b){return TW.sortNum(a.popularity, b.popularity);}]
 		,	track:		[true,	function(a,b){return TW.sortAlpha(a.name.decodeForText(), b.name.decodeForText());}]
 		,	artist:		[true,	function(a,b){return TW.sortAlpha(TW.getArtist(a), TW.getArtist(b), true);}]
-		,	album:		[true,	function(a,b){return TW.sortAlpha(a.album.name.decodeForText(), b.album.name.decodeForText(), true);}]
+		// The album is not always loaded, for some reason
+		,	album:		[true,	function(a,b){return TW.sortAlpha((a.album.name || '').decodeForText(), (b.album.name || '').decodeForText(), true);}]
 		}
 	,	current: []
 	,	sort: function(arg, tracks) {
@@ -38,28 +38,14 @@ function Playlist(models, css, Button, Throbber, List) {
 				return 0;
 			});
 			
-			var found = false;
-			if('context' in models.player && models.player.context !== null)
-				for(var i = 0; i < playlists.length && !found; ++i)
-					if(models.player.context.uri !== playlists[i].uri) {
-						found = true;
-						current = i;
-						playlists[current].load('tracks').done(function() {
-							playlists[current].tracks.clear();
-							playlists[current].tracks.add(tracks);
-						});
-					}
-			if(found)
-				createList(playlists[current], tracks);
-			else
-				createPlaylist(tracks);
+			showPlaylist(tracks);
 
 			// Code to test if the bug below has been fixed. Comment out the above code, and uncomment the below code
 //			if(list.model.items.length === 0)
-//				playlists[current].tracks.add(tracks);
-//			playlists[current].tracks.snapshot().done(function(snapshot) {
+//				playlist.tracks.add(tracks);
+//			playlist.tracks.snapshot().done(function(snapshot) {
 //				console.log(snapshot.find(models.player.track));
-//				playlists[current].tracks.insert(snapshot.find(models.player.track), tracks[0]);
+//				playlist.tracks.insert(snapshot.find(models.player.track), tracks[0]);
 //			});
 			
 			// Attempt to order list without creating new to avoid changing context (Call reorderPlaylist(playlist[current], tracks) instead of the code above if arg !== null)
@@ -90,18 +76,6 @@ function Playlist(models, css, Button, Throbber, List) {
 //					}
 //				});
 //			}
-			
-			if(typeof list !== 'undefined')
-				for(var i = 0; i < list.model.fields.length; ++i) {
-					var cell = list.view.nodes.headerRow.children[i];
-					css.removeClass(cell, 'sp-list-heading-sorted');
-					css.removeClass(cell, 'sp-list-heading-sorted-asc');
-					css.removeClass(cell, 'sp-list-heading-sorted-desc');
-					if(this.current.length > 0 && list.model.fields[i].id === this.current[0][0]) {
-						css.addClass(cell, 'sp-list-heading-sorted');
-						css.addClass(cell, this.current[0][1] ? 'sp-list-heading-sorted-asc' : 'sp-list-heading-sorted-desc');
-					}
-				}
 		}
 	};
 	
@@ -119,7 +93,10 @@ function Playlist(models, css, Button, Throbber, List) {
 	var properties = Properties.forPlaylist(sorting.func, form, update);
 	form.appendChild(addPlaylistBtn.node);
 	
-	createPlaylist();
+	models.Playlist.createTemporary('tempowiki-playlist').done(function(list) {
+		playlist = list;
+		showPlaylist();
+	});
 	
 	function updateAddPlaylistBtn(playlistLength) {
 		if(playlistLength === 0)
@@ -130,48 +107,49 @@ function Playlist(models, css, Button, Throbber, List) {
 			addPlaylistBtn.setDisabled(false);
 		}
 	}
-
-	function createPlaylist(tracks) {
-		models.Playlist.createTemporary('playlist-'+playlists.length).done(function(playlist) {
-			playlists.push(playlist);
-			if(!('context' in models.player) || models.player.context === null || models.player.context.uri !== playlist.uri) {
-				current = playlists.length-1;
-				playlist.load('tracks').done(function() {
-					playlist.tracks.clear();
-					if(typeof tracks !== 'undefined')
-						playlist.tracks.add(tracks);
-					createList(playlist, tracks);
-				});
-			} else
-				createPlaylist(tracks);
-		});
-	}
 	
-	function createList(playlist, tracks) {
+	function showPlaylist(tracks) {
 		if(typeof list !== 'undefined')
 			container.removeChild(list.node);
-			
-		// BUG: Hiding unplayable does not seem to be working
-		list = List.forPlaylist(playlist, {fields: ['ordinal', 'star', 'track', 'artist', 'time', 'album', 'popularity', 'dancegenre', 'musicgenre', 'tempo'], unplayable: 'hidden'});
-
-		// Go through list.model.items and tracks and compare uris.
-		// Create database over tracks that should be combined
-		// Copy over data from track in tracks to track in playlist
 		
-		properties.setPlaylist(list);
+		playlist.load('tracks').done(function(){
+			playlist.tracks.clear();
+			playlist.tracks.add(tracks || []).done(function(){
+				// BUG: Hiding unplayable does not seem to be working
+				list = List.forCollection(playlist.tracks, {fields: ['ordinal', 'star', 'track', 'artist', 'time', 'album', 'popularity', 'dancegenre', 'musicgenre', 'tempo'], unplayable: 'hidden'});
+				
+				// Go through list.model.items and tracks and compare uris.
+				// Create database over tracks that should be combined
+				// Copy over data from track in tracks to track in playlist
+				properties.setPlaylist(list);
+				
+				for(var i = 0; i < list.model.fields.length; ++i)
+					if(sorting.func.hasOwnProperty(list.model.fields[i].id)) {
+						css.addClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sortable');
+						list.view.nodes.headerRow.children[i].addEventListener('click', (function(field){return function(){sorting.sort(field);};})(list.model.fields[i].id));
+					}
 		
-		for(var i = 0; i < list.model.fields.length; ++i)
-			if(sorting.func.hasOwnProperty(list.model.fields[i].id)) {
-				css.addClass(list.view.nodes.headerRow.children[i], 'sp-list-heading-sortable');
-				list.view.nodes.headerRow.children[i].addEventListener('click', (function(field){return function(){sorting.sort(field);};})(list.model.fields[i].id));
-			}
-
-		updateAddPlaylistBtn(typeof tracks === 'undefined' ? 0 : tracks.length);
-		container.appendChild(list.node);
-		list.init();
-		// Creating custom throbber, since the built-in one is reset during loading, and therefore changes appearance
-		list.throbber = Throbber.forElement(list.node);
-		list.throbber.hide();
+				updateAddPlaylistBtn(typeof tracks === 'undefined' ? 0 : tracks.length);
+				container.appendChild(list.node);
+				list.init();
+				
+				// Creating custom throbber, since the built-in one is reset during loading, and therefore changes appearance
+				list.throbber = Throbber.forElement(list.node);
+				list.throbber.hide();
+				
+				if(typeof list !== 'undefined')
+					for(var i = 0; i < list.model.fields.length; ++i) {
+						var cell = list.view.nodes.headerRow.children[i];
+						css.removeClass(cell, 'sp-list-heading-sorted');
+						css.removeClass(cell, 'sp-list-heading-sorted-asc');
+						css.removeClass(cell, 'sp-list-heading-sorted-desc');
+						if(sorting.current.length > 0 && list.model.fields[i].id === sorting.current[0][0]) {
+							css.addClass(cell, 'sp-list-heading-sorted');
+							css.addClass(cell, sorting.current[0][1] ? 'sp-list-heading-sorted-asc' : 'sp-list-heading-sorted-desc');
+						}
+					}
+			});
+		});
 	}
 
 	function update() {
@@ -214,7 +192,7 @@ function Playlist(models, css, Button, Throbber, List) {
 							var track = models.Track.fromURI(metadata[i].track);
 							track.order = i;
 							properties.updateTrack(track, metadata[i].properties);
-							promises.push(track.load('playable'));
+							promises.push(track.load('playable', 'name', 'artists', 'duration', 'album', 'popularity'));
 						}
 						var tracks = [];
 						models.Promise.join(promises).each(function(track) {

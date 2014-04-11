@@ -2,7 +2,11 @@
 	{	"en": "An app for creating playlists tailored towards dance"
 	}
 ,	"AppIcon":
-	{	"36x18": "img/tempo-wiki.png"
+	{	"18x18": "img/icon/icon-18x18.png"
+	,	"32x32": "img/icon/icon-32x32.png"
+	,	"64x64": "img/icon/icon-64x64.png"
+	,	"128x128": "img/icon/icon-128x128.png"
+	,	"300x300": "img/icon/icon-300x300.png"
 	}
 ,	"AppName":
 	{	"en": "TempoWiki"

@@ -77,9 +77,9 @@ abstract class Genre implements IProperty {
 			$conditions[] = 't.track IN (SELECT track FROM '.static::TABLE_ACCU_USER." WHERE user = $user AND genre IN (".implode(', ', $include).'))';
 		if(!empty($exclude))
 			$conditions[] = 't.track NOT IN (SELECT track FROM '.static::TABLE_ACCU_USER." WHERE user = $user AND genre IN (".implode(', ', $exclude).'))';
-		$fields[] = 'GROUP_CONCAT(DISTINCT '.static::TABLE_ACCU_USER.'.genre) '.static::FIELD_PREFIX.'genres';
-		$tables[] = array(static::TABLE_ACCU_USER, array(static::TABLE_ACCU_USER.".user = $user"));
-		$ordering[] = 'SUM('.static::TABLE_ACCU_USER.'.value)';
+		$fields[] = '(SELECT GROUP_CONCAT(genre) FROM '.static::TABLE_ACCU_USER." WHERE (t.track = track AND user = $user)) ".static::FIELD_PREFIX.'genres';
+		if(!empty($include))
+			$ordering[] = '(SELECT SUM(value) FROM '.static::TABLE_ACCU_USER." WHERE (t.track = track AND user = $user AND genre IN (".implode(', ', $include).')))';
 	}
 	
 	public static function managePlaylistRow($row) {
