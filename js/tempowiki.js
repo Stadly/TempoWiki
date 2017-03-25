@@ -1,5 +1,4 @@
-var SERVER = 'http://www.myrtveitfoto.no/tempowiki/';	// Online server
-//var SERVER = 'http://tempowiki.com/';					// Local server
+var SERVER = 'http://www.myrtveit.com/tempowiki/';		// Online server
 
 (function() {
 	require(['$api/models', '$views/utils/css', '$views/list#List', '$views/buttons#Button', '$views/throbber#Throbber', '$views/popup#Popup', '$views/tabbar#TabBar', 'main.lang'], function(models, css, List, Button, Throbber, Popup, TabBar, locale) {

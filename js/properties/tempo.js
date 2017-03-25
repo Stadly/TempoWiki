@@ -1,5 +1,4 @@
 function Tempo(config, css, Button, Throbber, Popup) {
-	var echoNestAPIKey = 'JWR4RIYPCFCNWPMGD';
 	var instances = [];
 	var rangeMin = parseInt(config.config.rangeMin);
 	var rangeMax = parseInt(config.config.rangeMax);
@@ -26,24 +25,25 @@ function Tempo(config, css, Button, Throbber, Popup) {
 			if(track !== null && tempo === 0 && track.search(/^spotify:local:/) === -1) {
 				throbber.show();
 				xhr = new AjaxRequest
-				(	'http://developer.echonest.com/api/v4/track/profile?api_key='+echoNestAPIKey+'&bucket=audio_summary&id='+track.replace(/^spotify:/, 'spotify-WW:')
+				(	'https://api.spotify.com/v1/audio-features/'+track.replace(/^spotify:track:/, '')
 				,	{	callback:
 						function() {
-							// Success fetching data from The Echo Nest
+							// Success fetching data from the Spotify Web API
 							var data = eval('('+this.responseText+');');
-							if(data.response.track)
-								tempo = data.response.track.audio_summary.tempo || 0;
-							config.echoNest = tempo;
+							tempo = data.tempo;
+							config.spotifyWebApi = tempo;
 							update();
 						}
 					,	error:
 						function() {
-							// Error fetching data from The Echo Nest
-							console.log('Error fetching data from the Echo Nest');
+							// Error fetching data from the Spotify Web API
+							console.log('Error fetching data from the Spotify Web API');
 							console.log(this);
 							update();
 						}
 					}
+				,  null
+				,  'Token'
 				);
 			}
 		};
@@ -103,7 +103,7 @@ function Tempo(config, css, Button, Throbber, Popup) {
 		this.load = function(config) {
 			prevTap = 0;
 			taps = [];
-			tempo = config.tempo || (config.hasOwnProperty('echoNest') ? config.echoNest || 0 : 0);
+			tempo = config.tempo || (config.hasOwnProperty('spotifyWebApi') ? config.spotifyWebApi || 0 : 0);
 			update();
 		};
 

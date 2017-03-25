@@ -101,6 +101,7 @@ function Editor(player, Button, Throbber) {
 				}
 			}
 		,	data
+		,	'User'
 		);
 	}
 

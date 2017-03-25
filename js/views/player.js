@@ -37,7 +37,7 @@ function Player(player, Button, Throbber) {
 			if(playing.track !== null) {
 				var data = new FormData();
 				data.append('prev', JSON.stringify({track: playing.metadata.track, played: poller.changeTrack()}));
-				new AjaxRequest(SERVER+'fetch.php', {}, data);
+				new AjaxRequest(SERVER+'fetch.php', {}, data, 'User');
 				poller.stop();
 			}
 			
@@ -69,6 +69,7 @@ function Player(player, Button, Throbber) {
 					}
 				}
 			,	data
+			,	'User'
 			);
 			
 			playing.metadata = {};

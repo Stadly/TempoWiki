@@ -7,45 +7,28 @@ final class Auth {
 	public static function authenticate() {
 		require_once 'includes/User.php';
 		
-		$_SESSION['authenticated'] = FALSE;
-		$auth = array();
+		$auth = array('authenticated' => false);
 		$user = User::get();
 		
-		if($user !== 0) {
-			if(isset($_GET['password'])) {
-				if(isset($_SESSION['key']) && $_GET['password'] == self::getPassword($_SESSION['key']))
-					$_SESSION['authenticated'] = TRUE;
-			} else {
-				$_SESSION['key'] = self::generateKey();
-				$auth['key'] = $_SESSION['key'];
-			}
-		}
+		$spotify = new \SpotifyWebAPI\Session(CLIENT_ID, CLIENT_SECRET);
+		$spotify->requestCredentialsToken();
+		$auth['token'] = $spotify->getAccessToken();
 		
-		$auth['authenticated'] = $_SESSION['authenticated'];
-		if($_SESSION['authenticated']) {
+		if($user !== 0) {
 			require_once 'properties/Properties.php';
 			require_once 'profiler/Profiler.php';
+			$auth['authenticated'] = true;
 			$auth['config'] = Properties::config();
 			$auth['profiles'] = Profiler::fetch($user);
 		}
+		
 		return $auth;
 	}
 	
 	public static function authenticated() {
-		return isset($_SESSION['authenticated']) && $_SESSION['authenticated'];
-	}
-	
-	private static function getPassword($key) {
-		// Perform some secret algorithm on the key
-		return $key;
-	}
-	
-	private static function generateKey($length = 20) {
-		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		$randomString = '';
-		for($i = 0; $i < $length; ++$i)
-			$randomString .= $characters[rand(0, strlen($characters)-1)];
-		return $randomString;
+		require_once 'includes/User.php';
+		
+		return User::get() !== 0;
 	}
 }
 

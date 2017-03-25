@@ -1,10 +1,9 @@
 (function() {
 	var Auth = {};
-	var authenticated = false;
+	var currentUser = null;
+	var accessToken = null;
 	
 	Auth.authenticate = function(user, success, failure) {
-		authenticated = false;
-		
 		var data = new FormData();
 		data.append('user-identifier', user.identifier);
 		data.append('user-username', user.username);
@@ -15,20 +14,12 @@
 		,	{	callback:
 				function() {
 					var data = eval('('+this.responseText+');');
-					new AjaxRequest
-					(	SERVER+'auth.php?password='+getPassword(data.key)
-					,	{	callback:
-							function() {
-								var data = eval('('+this.responseText+');');
-								if(data.authenticated === true) {
-									authenticated = true;
-									success(data.config, data.profiles);
-								} else
-									failure.call(this);
-							}
-						,	error: failure
-						}
-					);
+					if(data.authenticated === true) {
+						currentUser = user;
+						accessToken = data.token;
+						success(data.config, data.profiles);
+					} else
+						failure.call(this);
 				}
 			,	error: failure
 			}
@@ -37,13 +28,16 @@
 	};
 	
 	Auth.authenticated = function() {
-		return authenticated;
+		return currentUser !== null;
 	};
 	
-	function getPassword(key) {
-		// Perform some secret algorithm on the key
-		return key;
-	}
+	Auth.getUser = function() {
+		return currentUser;
+	};
+	
+	Auth.getToken = function() {
+		return accessToken;
+	};
 	
 	window.Auth = Auth;
 })();

@@ -53,7 +53,7 @@ final class TempoWiki {
 			$sqlFields = empty($fields) ? '' : ', '.implode(', ', $fields);
 			$sqlWhere = empty($conditions) ? '' : ' WHERE '.implode(' AND ', $conditions);
 			$sqlOrdering = (empty($ordering) ? '' : '('.implode('+', $ordering).")*")."RAND($seed) DESC";
-			$select = $db->prepare("SELECT t.spotify track$sqlFields FROM ".Track::TABLE." t$sqlJoin$sqlWhere GROUP BY t.track ORDER BY $sqlOrdering LIMIT 0,200");
+			$select = $db->prepare("SELECT t.spotify track$sqlFields FROM ".Track::TABLE." t$sqlJoin$sqlWhere GROUP BY t.track ORDER BY $sqlOrdering LIMIT 0,500");
 
 			if($select->execute())
 				while($row = $select->fetch(PDO::FETCH_ASSOC)) {
@@ -61,8 +61,9 @@ final class TempoWiki {
 					$track['properties'] = Properties::managePlaylistRow($row);
 					$playlist[] = $track;
 				}
+			return $playlist;
 		}
-		return $playlist;
+		return array();
 	}
 	
 	public static function register() {

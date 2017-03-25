@@ -216,6 +216,7 @@ function Playlist(models, css, Button, Throbber, List) {
 					}
 				}
 			,	data
+			,	'User'
 			);
 		} else
 			sorting.sort(null, []);

@@ -37,13 +37,12 @@
 	,	"views": "1.18.1"
 	}
 ,	"RequiredPermissions":
-	[	"http://tempowiki.com"
-	,	"http://developer.echonest.com"
-	,	"http://www.myrtveitfoto.no"
+	[	"https://api.spotify.com"
+	,	"http://www.myrtveit.com"
 	]
 ,	"RequiredInterface": 1
 ,	"SupportedLanguages":
 	[	"en"
 	]
-,	"VendorIdentifier": "no.myrtveitfoto"
+,	"VendorIdentifier": "www.myrtveit.com/tempowiki"
 }

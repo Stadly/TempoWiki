@@ -1,4 +1,4 @@
-function AjaxRequest(uri, callback, post) {
+function AjaxRequest(uri, callback, post, authType) {
 	var xhr = new XMLHttpRequest();
 
 	if(typeof(callback) === 'function')
@@ -32,14 +32,27 @@ function AjaxRequest(uri, callback, post) {
 						this.error.call(this);
 			}
 	};
-
-	if(typeof post !== 'undefined' && post !== null) {
-		xhr.open('POST', uri, true);
-		xhr.send(post);
-	} else {
-		xhr.open('GET', uri, true);
-		xhr.send();
+	
+	if(typeof authType !== 'undefined' && authType === 'User' && Auth.authenticated()) {
+		if(typeof post === 'undefined' || post === null)
+			post = new FormData();
+		post.append('user-identifier', Auth.getUser().identifier);
+		post.append('user-username', Auth.getUser().username);
+		post.append('user-name', Auth.getUser().name);
 	}
+
+	if(typeof post !== 'undefined' && post !== null)
+		xhr.open('POST', uri, true);
+	else
+		xhr.open('GET', uri, true);
+	
+	if(typeof authType !== 'undefined' && authType === 'Token' && null !== Auth.getToken())
+		xhr.setRequestHeader('Authorization', 'Bearer '+Auth.getToken());
+
+	if(typeof post !== 'undefined' && post !== null)
+		xhr.send(post);
+	else
+		xhr.send();
 	
 	this.abort = function() {
 		if(xhr.readyState !== 4)
